@@ -59,16 +59,16 @@ export default function Dashboard() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">
             Dashboard
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-slate-450 mt-0.5">
             Real-time bug triage overview
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="flex items-center gap-2 text-xs text-sky-600 bg-sky-500/10 px-3 py-1.5 rounded-full font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
             Live
           </span>
         </div>
@@ -85,29 +85,29 @@ export default function Dashboard() {
           icon={Bug}
           label="Open Bugs"
           value={openBugs}
-          color="text-red-400"
-          bg="bg-red-400/10"
+          color="text-red-500"
+          bg="bg-red-500/10"
         />
         <StatCard
           icon={Activity}
           label="In Progress"
           value={inProgress}
-          color="text-violet-400"
-          bg="bg-violet-400/10"
+          color="text-sky-500"
+          bg="bg-sky-500/10"
         />
         <StatCard
           icon={CheckCircle2}
           label="Resolved"
           value={resolved}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
+          color="text-emerald-500"
+          bg="bg-emerald-500/10"
         />
         <StatCard
           icon={AlertTriangle}
           label="Avg Priority"
           value={`${avgPriority}%`}
-          color="text-amber-400"
-          bg="bg-amber-400/10"
+          color="text-amber-500"
+          bg="bg-amber-500/10"
         />
       </motion.div>
 
@@ -121,8 +121,8 @@ export default function Dashboard() {
           className="col-span-1 lg:col-span-8 space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Zap className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-sky-500" />
               Real-Time Bug Stream
             </h2>
             <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <GlassCard className="divide-y divide-white/[0.04]">
+          <GlassCard className="divide-y divide-[#0f172a]/08">
             {recentMessages?.map((msg: NonNullable<typeof recentMessages>[0], i: number) => (
               <motion.div
                 key={msg.id}
@@ -165,7 +165,7 @@ export default function Dashboard() {
                       {msg.bug && (
                         <PriorityBadge severity={msg.bug.severity} />
                       )}
-                      <span className="text-sm font-medium text-white">
+                      <span className="text-sm font-bold text-slate-700">
                         {msg.bug?.title || "Processing..."}
                       </span>
                     </div>
@@ -178,15 +178,15 @@ export default function Dashboard() {
                           size={28}
                         />
                       )}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1 pl-[1px]">
+                  <p className="text-xs text-slate-400 mb-2 line-clamp-1 pl-[1px]">
                     {msg.rawContent}
                   </p>
 
-                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-4 text-[11px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       {msg.bug?.assigneeHandle || "Unassigned"}
@@ -205,7 +205,7 @@ export default function Dashboard() {
             ))}
 
             {(!recentMessages || recentMessages.length === 0) && (
-              <div className="p-8 text-center text-muted-foreground text-sm">
+              <div className="p-8 text-center text-slate-400 text-sm font-medium">
                 No bugs reported yet. The stream will populate as messages
                 arrive.
               </div>
@@ -222,8 +222,8 @@ export default function Dashboard() {
         >
           {/* Agent Activity */}
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
-              <Activity className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
+              <Activity className="w-4 h-4 text-sky-500" />
               Agent Activity
             </h2>
             <AgentActivityFeed activities={activities || []} />
@@ -231,8 +231,8 @@ export default function Dashboard() {
 
           {/* Source Distribution */}
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
-              <MessageSquare className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
+              <MessageSquare className="w-4 h-4 text-sky-500" />
               Sources
             </h2>
             <GlassCard className="p-4">
@@ -241,25 +241,25 @@ export default function Dashboard() {
                   <div key={src.source} className="flex items-center gap-3">
                     <SourceBadge source={src.source} />
                     <div className="flex-1">
-                      <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[#0f172a]/08 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{
                             width: `${Math.min(100, (src.count / Math.max(messageStats?.total || 1, 1)) * 100)}%`,
                           }}
                           transition={{ duration: 0.5, delay: 0.2 }}
-                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500"
+                          className="h-full rounded-full bg-gradient-to-r from-sky-500 to-teal-500"
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground w-6 text-right">
+                    <span className="text-xs font-mono text-slate-450 w-6 text-right">
                       {src.count}
                     </span>
                   </div>
                 ))}
                 {(!messageStats?.bySource ||
                   messageStats.bySource.length === 0) && (
-                  <p className="text-xs text-muted-foreground text-center py-2">
+                  <p className="text-xs text-slate-400 text-center py-2">
                     No data yet
                   </p>
                 )}
@@ -269,8 +269,8 @@ export default function Dashboard() {
 
           {/* Component Breakdown */}
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
-              <Bug className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
+              <Bug className="w-4 h-4 text-sky-500" />
               Components
             </h2>
             <GlassCard className="p-4">
@@ -280,10 +280,10 @@ export default function Dashboard() {
                     key={comp.component}
                     className="flex items-center justify-between text-xs"
                   >
-                    <span className="text-muted-foreground capitalize">
+                    <span className="text-slate-500 capitalize font-medium">
                       {comp.component}
                     </span>
-                    <span className="font-mono text-foreground">
+                    <span className="font-mono text-slate-700 font-bold">
                       {comp.count}
                     </span>
                   </div>
@@ -294,26 +294,26 @@ export default function Dashboard() {
 
           {/* Quick Links */}
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
+              <Zap className="w-4 h-4 text-sky-500" />
               Quick Actions
             </h2>
             <div className="space-y-2">
               <Link
                 to="/issues"
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.1] transition-all text-sm"
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/40 hover:bg-slate-100/50 border border-slate-100 hover:border-slate-200 transition-all text-sm shadow-sm"
               >
-                <Bug className="w-4 h-4 text-violet-400" />
-                <span className="text-foreground">View All Issues</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                <Bug className="w-4 h-4 text-sky-500" />
+                <span className="text-slate-700 font-semibold">View All Issues</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 ml-auto" />
               </Link>
               <Link
                 to="/analytics"
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.1] transition-all text-sm"
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/40 hover:bg-slate-100/50 border border-slate-100 hover:border-slate-200 transition-all text-sm shadow-sm"
               >
-                <BarChart3 className="w-4 h-4 text-blue-400" />
-                <span className="text-foreground">Analytics</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                <BarChart3 className="w-4 h-4 text-sky-500" />
+                <span className="text-slate-700 font-semibold">Analytics</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 ml-auto" />
               </Link>
             </div>
           </div>
@@ -338,14 +338,14 @@ function StatCard({
 }) {
   return (
     <motion.div variants={item}>
-      <GlassCard className="p-4 glass-card-hover">
+      <GlassCard className="p-4 glass-card-hover shadow-sm">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center`}>
             <Icon className={`w-5 h-5 ${color}`} />
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{value}</p>
-            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-2xl font-black text-slate-800">{value}</p>
+            <p className="text-xs text-slate-400 font-medium">{label}</p>
           </div>
         </div>
       </GlassCard>
@@ -367,10 +367,10 @@ function FilterButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] border transition-all ${
+      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all ${
         active
-          ? "bg-violet-500/20 border-violet-500/40 text-violet-300"
-          : "text-muted-foreground bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.06] hover:border-white/[0.1]"
+          ? "bg-sky-500/20 border-sky-500/40 text-sky-600 shadow-sm"
+          : "text-slate-400 bg-white/40 hover:bg-slate-100/50 border-slate-100 hover:border-slate-200"
       }`}
     >
       <Icon className="w-3 h-3" />

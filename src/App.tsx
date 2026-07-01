@@ -8,13 +8,18 @@ import Settings from "./pages/Settings";
 import ReleaseNotes from "./pages/ReleaseNotes";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
   return (
     <Routes>
+      {/* Landing Page - public */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+
+      {/* App Routes - with sidebar layout */}
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<Issues />} />
         <Route path="/issues/:id" element={<BugDetail />} />
         <Route path="/analytics" element={<Analytics />} />

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/GlassCard";
+import { motion } from "framer-motion";
 
 function getOAuthUrl() {
   const kimiAuthUrl = import.meta.env.VITE_KIMI_AUTH_URL;
@@ -19,23 +19,27 @@ function getOAuthUrl() {
 
 export default function Login() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle>Welcome</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button
-            className="w-full"
-            size="lg"
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50/50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-sm"
+      >
+        <GlassCard className="p-6 text-center space-y-6 shadow-xl border border-slate-200/60">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Welcome to Bug Triage</h1>
+            <p className="text-xs text-slate-450 font-semibold">Sign in to manage your agent triage system</p>
+          </div>
+          <button
             onClick={() => {
               window.location.href = getOAuthUrl();
             }}
+            className="w-full py-2.5 px-4 text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-teal-500 hover:opacity-95 rounded-xl transition-all shadow-sm"
           >
             Sign in with Kimi
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </GlassCard>
+      </motion.div>
     </div>
   );
 }

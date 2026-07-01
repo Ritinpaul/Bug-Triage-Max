@@ -23,10 +23,10 @@ const agentIcons: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 const agentColors: Record<string, string> = {
-  parser: "text-violet-400",
-  triage: "text-blue-400",
-  reproduction: "text-cyan-400",
-  release: "text-emerald-400",
+  parser: "text-emerald-600",
+  triage: "text-sky-600",
+  reproduction: "text-indigo-600",
+  release: "text-emerald-600",
 };
 
 const statusIcons: Record<string, string> = {
@@ -37,27 +37,27 @@ const statusIcons: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  running: "text-violet-400",
-  completed: "text-emerald-400",
-  failed: "text-red-400",
-  waiting: "text-muted-foreground",
+  running: "text-emerald-500",
+  completed: "text-emerald-500",
+  failed: "text-red-500",
+  waiting: "text-slate-400",
 };
 
 export function AgentActivityFeed({ activities }: AgentActivityFeedProps) {
   if (!activities || activities.length === 0) {
     return (
       <GlassCard className="p-6 text-center">
-        <p className="text-sm text-muted-foreground">No recent activity</p>
+        <p className="text-sm text-slate-400 font-medium">No recent activity</p>
       </GlassCard>
     );
   }
 
   return (
-    <GlassCard className="divide-y divide-white/[0.04]">
+    <GlassCard className="divide-y divide-[#0f172a]/08">
       {activities.map((activity) => {
         const Icon = agentIcons[activity.agentName] || Circle;
-        const agentColor = agentColors[activity.agentName] || "text-muted-foreground";
-        const statusColor = statusColors[activity.status] || "text-muted-foreground";
+        const agentColor = agentColors[activity.agentName] || "text-slate-400";
+        const statusColor = statusColors[activity.status] || "text-slate-400";
 
         return (
           <div key={activity.id} className="p-3 flex items-start gap-3">

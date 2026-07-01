@@ -206,7 +206,7 @@ async function seed() {
       channel: sample.channel,
       status: sample.status,
       timestamp,
-    }).$returningId();
+    }).returning();
 
     if (sample.parsed) {
       // Insert parsed result
@@ -221,7 +221,7 @@ async function seed() {
         overallConfidence: sample.parsed.confidence,
         keywords: extractKeywords(sample.rawContent),
         flaggedForReview: sample.parsed.confidence < 0.6 ? 1 : 0,
-      }).$returningId();
+      }).returning();
 
       if (sample.bug) {
         // Insert bug report
@@ -236,7 +236,7 @@ async function seed() {
           priorityScore: sample.bug.priorityScore,
           status: sample.bug.status,
           assigneeHandle: sample.bug.assigneeHandle,
-        }).$returningId();
+        }).returning();
 
         bugIds.push(bugResult.id);
 

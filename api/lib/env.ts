@@ -5,11 +5,11 @@ function required(name: string): string {
   if (!value && process.env.NODE_ENV === "production") {
     throw new Error(`Missing required environment variable: ${name}`);
   }
-  return value ?? "";
+  return value || (name.includes("URL") ? "http://localhost:3000" : "");
 }
 
 function optional(name: string): string {
-  return process.env[name] ?? "";
+  return process.env[name] || "";
 }
 
 export const env = {

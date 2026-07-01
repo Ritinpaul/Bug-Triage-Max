@@ -14,7 +14,7 @@ import {
   similarBugMatches,
   teamMembers,
 } from "../../db/schema";
-import { eq, desc, sql, gte, and, ne } from "drizzle-orm";
+import { eq, desc, sql, gte } from "drizzle-orm";
 import {
   parseMessageWithGemini,
   generateReproStepsWithGemini,

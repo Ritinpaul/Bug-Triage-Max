@@ -7,21 +7,20 @@ import {
   Bug,
   BarChart3,
   Settings,
-  Zap,
   Shield,
   LogOut,
   ChevronRight,
   FileText,
-  AlertCircle,
   Loader2,
   Menu,
   X,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/providers/trpc";
 
 const navItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/issues", label: "Issues", icon: Bug },
   { path: "/analytics", label: "Analytics", icon: BarChart3 },
   { path: "/release-notes", label: "Release Notes", icon: FileText },
@@ -32,127 +31,130 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
-  
+
   // Start global SSE listener
   useLiveStream();
 
   const { data: healthData } = trpc.agents.health.useQuery();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0a0a0f]">
+    <div className="flex h-screen w-screen overflow-hidden bg-gradient-to-b from-[#e0f0fc] to-[#f0f7ff] text-[#0f172a]">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/60 md:hidden backdrop-blur-sm"
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/20 md:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-[#0e0e18] border-r border-white/[0.06] transition-transform duration-300 md:relative md:translate-x-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#0f172a]/08 transition-transform duration-300 md:relative md:translate-x-0 shadow-lg shadow-slate-900/5",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         {/* Mobile Close Button */}
-        <button 
+        <button
           onClick={() => setSidebarOpen(false)}
-          className="md:hidden absolute top-4 right-4 p-1.5 text-muted-foreground hover:text-foreground hover:bg-white/[0.05] rounded-md"
+          className="md:hidden absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5">
-          <div className="relative w-9 h-9 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-blue-500 rounded-lg opacity-80" />
-            <Zap className="relative w-5 h-5 text-white" />
+        <Link to="/" className="flex items-center gap-3 px-6 py-5 cursor-pointer hover:opacity-80 transition-opacity">
+          <div className="w-9 h-9 rounded-xl bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+            <Bug className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white tracking-tight">
-              Bug Triage Max
-            </h1>
-            <p className="text-[10px] text-muted-foreground font-mono">
-              AI-Powered
-            </p>
+            <h1 className="text-sm font-black text-slate-800 tracking-tight leading-tight">Bug Triage Max</h1>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">AI-Powered</p>
           </div>
+        </Link>
+
+        {/* Back to Home */}
+        <div className="px-3 mb-1">
+          <Link
+            to="/"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>Back to Home</span>
+          </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-2 space-y-0.5">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path !== "/" && location.pathname.startsWith(item.path));
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 group border",
                   isActive
-                    ? "bg-violet-500/10 text-violet-400"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]"
+                    ? "bg-sky-500/10 text-sky-600 border-sky-500/20 shadow-sm shadow-sky-500/5"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-transparent"
                 )}
               >
                 <item.icon
                   className={cn(
                     "w-4.5 h-4.5 transition-colors",
-                    isActive ? "text-violet-400" : "text-muted-foreground group-hover:text-foreground"
+                    isActive ? "text-sky-600" : "text-slate-400 group-hover:text-slate-900"
                   )}
                 />
                 <span>{item.label}</span>
-                {isActive && (
-                  <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
-                )}
+                {isActive && <ChevronRight className="w-4 h-4 ml-auto opacity-50" />}
               </Link>
             );
           })}
         </nav>
 
-        {/* System Health Mini */}
+        {/* System Health */}
         <div className="px-4 py-3 mx-3 mb-2">
-          <div className="glass-card p-3 rounded-lg">
+          <div className="glass-card p-3 rounded-2xl bg-white/50 border border-white/60">
             <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                System Health
-              </span>
+              <Shield className="w-3.5 h-3.5 text-sky-500" />
+              <span className="text-xs font-bold text-slate-500">System Health</span>
             </div>
             <div className="space-y-1.5">
               {healthData ? (
                 healthData.map((agent) => {
-                  let statusColor = "text-emerald-400";
-                  let bgPulse = "bg-emerald-400 animate-pulse";
+                  let statusColor = "text-emerald-500";
+                  let bgPulse = "bg-emerald-500 animate-pulse";
                   let label = "Online";
 
                   if (agent.status === "error") {
-                    statusColor = "text-red-400";
-                    bgPulse = "bg-red-400";
+                    statusColor = "text-red-500";
+                    bgPulse = "bg-red-500";
                     label = "Error";
                   } else if (agent.status === "idle") {
-                    statusColor = "text-muted-foreground";
-                    bgPulse = "bg-muted-foreground/50";
+                    statusColor = "text-slate-400";
+                    bgPulse = "bg-slate-300";
                     label = "Idle";
                   } else if (agent.status === "running") {
-                    statusColor = "text-blue-400";
-                    bgPulse = "bg-blue-400 animate-pulse";
+                    statusColor = "text-sky-500";
+                    bgPulse = "bg-sky-500 animate-pulse";
                     label = "Running";
                   }
 
                   return (
                     <div key={agent.agent} className="flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground capitalize">
-                        {agent.agent}
-                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium capitalize">{agent.agent}</span>
                       <span className="flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${bgPulse}`} />
-                        <span className={`text-[11px] ${statusColor}`}>{label}</span>
+                        <span className={`text-[11px] font-bold ${statusColor}`}>{label}</span>
                       </span>
                     </div>
                   );
                 })
               ) : (
                 <div className="flex items-center justify-center py-2">
-                  <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                  <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
                 </div>
               )}
             </div>
@@ -160,32 +162,21 @@ export function Layout() {
         </div>
 
         {/* User */}
-        <div className="px-4 py-3 border-t border-white/[0.06]">
+        <div className="px-4 py-3 border-t border-[#0f172a]/08">
           <div className="flex items-center gap-3">
             {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name || "User"}
-                className="w-8 h-8 rounded-full ring-1 ring-white/10"
-              />
+              <img src={user.avatar} alt={user.name || "User"} className="w-8 h-8 rounded-full ring-1 ring-slate-100" />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-xs font-medium text-white">
+              <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-sky-500/20">
                 {user?.name?.[0]?.toUpperCase() || "U"}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">
-                {user?.name || "Guest"}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {user?.email || "Not signed in"}
-              </p>
+              <p className="text-xs font-bold text-slate-700 truncate">{user?.name || "Guest"}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user?.email || "Not signed in"}</p>
             </div>
             {user && (
-              <button
-                onClick={logout}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-colors"
-              >
+              <button onClick={logout} className="p-1.5 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 <LogOut className="w-3.5 h-3.5" />
               </button>
             )}
@@ -196,15 +187,14 @@ export function Layout() {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden flex flex-col min-w-0">
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-white/[0.06] bg-[#0e0e18]">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-[#0f172a]/08 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-violet-400" />
-            <h1 className="text-sm font-semibold text-white">Bug Triage Max</h1>
+            <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
+              <Bug className="w-4 h-4 text-white" />
+            </div>
+            <h1 className="text-sm font-black text-slate-800">Bug Triage Max</h1>
           </div>
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-white/[0.05] rounded-md"
-          >
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md">
             <Menu className="w-5 h-5" />
           </button>
         </div>

@@ -84,6 +84,7 @@ async function checkSlack(): Promise<{
   status: "online" | "degraded" | "offline" | "error";
   responseTime: number;
   metadata: Record<string, unknown>;
+  error?: string;
 }> {
   const token = process.env.SLACK_BOT_TOKEN ?? "";
   const signingSecret = process.env.SLACK_SIGNING_SECRET ?? "";
@@ -119,11 +120,12 @@ async function checkSlack(): Promise<{
       status: "error",
       responseTime: Date.now() - start,
       metadata: { configured: true },
+      error: err instanceof Error ? err.message : "Unknown error",
     };
   }
 }
 
-function checkEmail(): { status: "online" | "offline"; responseTime: number; metadata: Record<string, unknown> } {
+function checkEmail(): { status: "online" | "offline"; responseTime: number; metadata: Record<string, unknown>; error?: string } {
   const host = process.env.EMAIL_IMAP_HOST ?? "";
   const user = process.env.EMAIL_IMAP_USER ?? "";
   const pass = process.env.EMAIL_IMAP_PASSWORD ?? "";
@@ -135,7 +137,7 @@ function checkEmail(): { status: "online" | "offline"; responseTime: number; met
   };
 }
 
-function checkLemma(): { status: "online" | "offline"; responseTime: number; metadata: Record<string, unknown> } {
+function checkLemma(): { status: "online" | "offline"; responseTime: number; metadata: Record<string, unknown>; error?: string } {
   // Lemma SDK — not integrated yet, report offline
   return { status: "offline", responseTime: 0, metadata: { configured: false, note: "Lemma SDK integration pending" } };
 }

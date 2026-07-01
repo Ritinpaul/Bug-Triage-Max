@@ -8,7 +8,6 @@ import {
   json,
   integer,
   real,
-  bigint,
   index,
 } from "drizzle-orm/pg-core";
 
