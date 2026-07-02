@@ -2,7 +2,7 @@ import devServer from "@hono/vite-dev-server"
 import path from "path"
 const __dirname = import.meta.dirname
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig } from "vitest/config"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
 
 /// <reference types="vitest" />
@@ -29,8 +29,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   test: {
-    include: ["src/test/**/*.test.ts"],
+    include: ["src/test/**/*.test.ts", "src/**/*.test.tsx"],
     setupFiles: ["src/test/setup.ts"],
-    environment: "node",
+    environment: "jsdom",
   },
 });

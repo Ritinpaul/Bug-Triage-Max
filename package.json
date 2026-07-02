@@ -88,6 +88,9 @@
     "@electric-sql/pglite": "^0.5.4",
     "@eslint/js": "^9.39.1",
     "@hono/vite-dev-server": "^0.19.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
@@ -100,6 +103,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "jsdom": "^29.1.1",
     "kimi-plugin-inspect-react": "^1.0.3",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
@@ -109,6 +113,6 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "vitest": "^4.0.16"
+    "vitest": "^4.1.9"
   }
 }
