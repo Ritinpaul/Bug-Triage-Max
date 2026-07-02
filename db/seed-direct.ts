@@ -1,38 +1,34 @@
 /**
- * Direct seed script using mysql2 directly
+ * Direct seed script using postgres directly
  * Run: npx tsx db/seed-direct.ts
  */
 
-import mysql from "mysql2/promise";
+import "dotenv/config";
+import postgres from "postgres";
 
 async function seed() {
   const dbUrl = process.env.DATABASE_URL || "";
-  const url = new URL(dbUrl);
-  
-  const connection = await mysql.createConnection({
-    host: url.hostname,
-    port: parseInt(url.port) || 3306,
-    user: url.username,
-    password: decodeURIComponent(url.password),
-    database: url.pathname.slice(1),
-  });
+  if (!dbUrl) throw new Error("DATABASE_URL is missing");
+
+  // postgres will use ssl: require if specified in the URL or options
+  const sql = postgres(dbUrl, { ssl: "require" });
 
   console.log("Seeding Bug Triage Max database...");
 
   // Clear existing data
-  await connection.execute("DELETE FROM similar_bug_matches");
-  await connection.execute("DELETE FROM reproduction_steps");
-  await connection.execute("DELETE FROM bug_reports");
-  await connection.execute("DELETE FROM parsed_results");
-  await connection.execute("DELETE FROM agent_activities");
-  await connection.execute("DELETE FROM messages");
-  await connection.execute("DELETE FROM team_members");
-  await connection.execute("DELETE FROM analytics_snapshots");
-  await connection.execute("DELETE FROM integration_status");
+  await sql`DELETE FROM similar_bug_matches`;
+  await sql`DELETE FROM reproduction_steps`;
+  await sql`DELETE FROM bug_reports`;
+  await sql`DELETE FROM parsed_results`;
+  await sql`DELETE FROM agent_activities`;
+  await sql`DELETE FROM messages`;
+  await sql`DELETE FROM team_members`;
+  await sql`DELETE FROM analytics_snapshots`;
+  await sql`DELETE FROM integration_status`;
   console.log("  Cleared existing data");
 
   // Team Members
-  await connection.execute(`
+  await sql.unsafe(`
     INSERT INTO team_members (name, handle, email, expertise, is_on_call) VALUES
     ('Alice Chen', '@alice', 'alice@company.com', '["auth","api"]', 0),
     ('Bob Martinez', '@bob', 'bob@company.com', '["billing","database"]', 1),
@@ -43,7 +39,7 @@ async function seed() {
   console.log("  Seeded 5 team members");
 
   // Integration Status
-  await connection.execute(`
+  await sql.unsafe(`
     INSERT INTO integration_status (service, status, response_time, metadata) VALUES
     ('github', 'online', 120, '{"rateLimit": "4999/5000", "version": "v3"}'),
     ('slack', 'online', 85, '{"botUser": "bug-triage-bot", "channels": 3}'),
@@ -69,10 +65,7 @@ async function seed() {
 
   for (const m of msgs) {
     const ts = new Date(Date.now() - m.hrs * 60 * 60 * 1000);
-    await connection.execute(
-      `INSERT INTO messages (source, raw_content, sender_id, sender_name, sender_email, channel, status, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [m.s, m.r, m.sid, m.sn, m.se, m.ch, m.st, ts]
-    );
+    await sql`INSERT INTO messages (source, raw_content, sender_id, sender_name, sender_email, channel, status, timestamp) VALUES (${m.s}, ${m.r}, ${m.sid}, ${m.sn}, ${m.se}, ${m.ch}, ${m.st}, ${ts})`;
   }
   console.log(`  Seeded ${msgs.length} messages`);
 
@@ -91,10 +84,7 @@ async function seed() {
   ];
 
   for (const p of parsedData) {
-    await connection.execute(
-      `INSERT INTO parsed_results (message_id, intent, intent_confidence, component, component_confidence, severity_score, severity_label, overall_confidence, keywords, flagged_for_review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [p.mid, p.i, p.ic, p.c, p.cc, p.ss, p.sl, p.oc, p.kw, p.fr]
-    );
+    await sql`INSERT INTO parsed_results (message_id, intent, intent_confidence, component, component_confidence, severity_score, severity_label, overall_confidence, keywords, flagged_for_review) VALUES (${p.mid}, ${p.i}, ${p.ic}, ${p.c}, ${p.cc}, ${p.ss}, ${p.sl}, ${p.oc}, ${p.kw}, ${p.fr})`;
   }
   console.log(`  Seeded ${parsedData.length} parsed results`);
 
@@ -111,10 +101,7 @@ async function seed() {
   ];
 
   for (const b of bugData) {
-    await connection.execute(
-      `INSERT INTO bug_reports (message_id, parsed_result_id, title, description, source, component, severity, priority_score, status, assignee_handle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [b.mid, b.prid, b.t, b.d, b.s, b.c, b.sev, b.ps, b.st, b.ah]
-    );
+    await sql`INSERT INTO bug_reports (message_id, parsed_result_id, title, description, source, component, severity, priority_score, status, assignee_handle) VALUES (${b.mid}, ${b.prid}, ${b.t}, ${b.d}, ${b.s}, ${b.c}, ${b.sev}, ${b.ps}, ${b.st}, ${b.ah})`;
   }
   console.log(`  Seeded ${bugData.length} bug reports`);
 
@@ -129,15 +116,12 @@ async function seed() {
   ];
 
   for (const r of reproData) {
-    await connection.execute(
-      `INSERT INTO reproduction_steps (bug_report_id, steps, expected_behavior, actual_behavior, error_log_summary, accuracy_score) VALUES (?, ?, ?, ?, ?, ?)`,
-      [r.bid, r.stp, r.exp, r.act, r.err, r.acc]
-    );
+    await sql`INSERT INTO reproduction_steps (bug_report_id, steps, expected_behavior, actual_behavior, error_log_summary, accuracy_score) VALUES (${r.bid}, ${r.stp}, ${r.exp}, ${r.act}, ${r.err}, ${r.acc})`;
   }
   console.log(`  Seeded ${reproData.length} reproduction step sets`);
 
   // Similar Bug Matches
-  await connection.execute(`
+  await sql.unsafe(`
     INSERT INTO similar_bug_matches (bug_report_id, similar_bug_id, similarity_score, is_duplicate) VALUES
     (1, 6, 0.87, 0),
     (3, 8, 0.72, 0)
@@ -160,21 +144,18 @@ async function seed() {
   ];
 
   for (const a of actData) {
-    await connection.execute(
-      `INSERT INTO agent_activities (agent_name, action, target_id, target_type, status, duration) VALUES (?, ?, ?, ?, ?, ?)`,
-      [a.an, a.a, a.tid, a.tty, a.st, a.dur]
-    );
+    await sql`INSERT INTO agent_activities (agent_name, action, target_id, target_type, status, duration) VALUES (${a.an}, ${a.a}, ${a.tid}, ${a.tty}, ${a.st}, ${a.dur})`;
   }
   console.log(`  Seeded ${actData.length} agent activities`);
 
   // Analytics Snapshot
-  await connection.execute(`
+  await sql.unsafe(`
     INSERT INTO analytics_snapshots (total_messages, total_bugs, open_bugs, resolved_bugs, avg_resolution_time, bugs_by_component, bugs_by_severity, top_assignees) VALUES
     (10, 8, 6, 0, 0, '{"auth": 2, "billing": 1, "api": 2, "ui": 2, "database": 1}', '{"P0": 2, "P1": 3, "P2": 2, "P3": 1}', '[{"handle": "@alice", "count": 2}, {"handle": "@diana", "count": 3}, {"handle": "@bob", "count": 1}, {"handle": "@charlie", "count": 2}]')
   `);
   console.log("  Seeded analytics snapshot");
 
-  await connection.end();
+  await sql.end();
   console.log("\nSeed complete! The dashboard is ready with realistic demo data.");
   console.log("Run 'npm run dev' to start the application.");
 }
