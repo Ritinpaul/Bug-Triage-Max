@@ -11,6 +11,9 @@ import { Paths } from "@contracts/constants";
 import { createWebhookRouter } from "./services/webhook-handlers";
 import { startEmailPoller } from "./services/email-service";
 import { systemEvents } from "./services/events";
+import { authenticateRequest } from "./kimi/auth";
+import { getDb } from "./queries/connection";
+import { bugReports } from "../db/schema";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
@@ -20,6 +23,41 @@ app.route("/", webhookRouter);
 
 // ── OAuth callback ────────────────────────────────────────────────────
 app.get(Paths.oauthCallback, createOAuthCallbackHandler());
+
+// ── CSV Bug Export ────────────────────────────────────────────────────
+app.get("/api/export/bugs.csv", async (c) => {
+  try {
+    const user = await authenticateRequest(c.req.raw.headers);
+    if (!user) {
+      return c.text("Unauthorized", 401);
+    }
+  } catch {
+    return c.text("Unauthorized", 401);
+  }
+
+  const db = getDb();
+  const bugs = await db.select().from(bugReports);
+  
+  // Format as CSV
+  const header = ["ID", "Title", "Status", "Severity", "Component", "Created At"].join(",");
+  const rows = bugs.map(b => {
+    return [
+      b.id,
+      `"${b.title.replace(/"/g, '""')}"`,
+      b.status,
+      b.severity,
+      b.component,
+      b.createdAt.toISOString()
+    ].join(",");
+  });
+  
+  const csvData = [header, ...rows].join("\n");
+  
+  return c.text(csvData, 200, {
+    "Content-Type": "text/csv",
+    "Content-Disposition": 'attachment; filename="bugpulse-export.csv"'
+  });
+});
 
 // ── SSE Real-time Events ──────────────────────────────────────────────
 app.get("/api/events", (c) => {

@@ -10,7 +10,7 @@ const t = initTRPC.context<TrpcContext>().create({
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 export const rateLimitMiddleware = (limit: number, windowMs: number) => t.middleware(async ({ ctx, next, path }) => {
-  const ip = ctx.req.header('x-forwarded-for') || ctx.req.header('x-real-ip') || 'unknown';
+  const ip = ctx.req.headers.get('x-forwarded-for') || ctx.req.headers.get('x-real-ip') || 'unknown';
   const key = `${ip}-${path}`;
   const now = Date.now();
   const record = requestCounts.get(key);

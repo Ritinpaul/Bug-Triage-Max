@@ -7,8 +7,9 @@ import {
   messages,
   parsedResults,
   reproductionSteps,
+  similarBugMatches,
 } from "../../db/schema";
-import { eq, and, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNotNull, sql, inArray } from "drizzle-orm";
 import {
   createGitHubIssue,
   getGitHubIssue,
@@ -73,13 +74,13 @@ export const bugRouter = createRouter({
 
       if (bugIds.length > 0) {
         const repros = await db.select().from(reproductionSteps)
-          .where(sql`bug_report_id IN ${bugIds}`);
+          .where(inArray(reproductionSteps.bugReportId, bugIds));
         repros.forEach((r) => {
           reprosByBugId[r.bugReportId] = r;
         });
 
         const similars = await db.select().from(similarBugMatches)
-          .where(sql`bug_report_id IN ${bugIds}`)
+          .where(inArray(similarBugMatches.bugReportId, bugIds))
           .orderBy(sql`similarity_score DESC`);
         similars.forEach((s) => {
           if (!similarByBugId[s.bugReportId]) similarByBugId[s.bugReportId] = [];

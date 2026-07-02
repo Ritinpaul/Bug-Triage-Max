@@ -218,7 +218,7 @@ export default function LandingPage() {
               ))}
             </div>
             <span className="text-xs font-semibold text-[#0f172a]/70">
-              16,000+ founders raising with OpenVC
+              Trusted by dev teams. Zero bugs missed.
             </span>
           </motion.div>
 

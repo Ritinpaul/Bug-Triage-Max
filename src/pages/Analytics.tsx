@@ -7,6 +7,7 @@ import {
   Zap,
   CheckCircle2,
   AlertTriangle,
+  Timer,
 } from "lucide-react";
 import {
   BarChart,
@@ -66,8 +67,15 @@ export default function Analytics() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-5 gap-4"
       >
+        <StatCard
+          icon={Timer}
+          label="Avg Resolution"
+          value={overview?.bugs?.avgResolution ? `${Math.round(overview.bugs.avgResolution)}m` : "—"}
+          color="text-indigo-600"
+          bg="bg-indigo-500/10"
+        />
         <StatCard
           icon={Clock}
           label="Avg Parse Time"
@@ -99,7 +107,7 @@ export default function Analytics() {
       </motion.div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Daily Trend */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -203,6 +211,51 @@ export default function Analytics() {
                 </span>
               ))}
             </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* Bugs by Severity */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+        >
+          <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-sky-500" />
+            Bugs by Severity
+          </h2>
+          <GlassCard className="p-4 h-72 shadow-sm">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={overview?.bugs?.bySeverity || []} layout="vertical" margin={{ left: 10 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(15,23,42,0.06)"
+                  horizontal={false}
+                />
+                <XAxis
+                  type="number"
+                  tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                  stroke="rgba(15,23,42,0.06)"
+                />
+                <YAxis
+                  dataKey="severity"
+                  type="category"
+                  tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                  stroke="rgba(15,23,42,0.06)"
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#ffffff",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)",
+                  }}
+                  labelStyle={{ color: "#475569", fontWeight: 700 }}
+                />
+                <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </GlassCard>
         </motion.div>
       </div>

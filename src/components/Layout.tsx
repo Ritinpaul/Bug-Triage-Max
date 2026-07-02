@@ -43,7 +43,7 @@ export function Layout() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-gradient-to-b from-[#e0f0fc] to-[#f0f7ff] text-[#0f172a]">
+    <div className="flex h-screen w-screen overflow-hidden bg-gradient-to-b from-[#e0f0fc] to-[#f0f7ff] dark:from-[#020817] dark:to-[#0f172a] text-[#0f172a] dark:text-slate-200 transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -55,7 +55,7 @@ export function Layout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#0f172a]/08 transition-transform duration-300 md:relative md:translate-x-0 shadow-lg shadow-slate-900/5",
+          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-r border-[#0f172a]/08 dark:border-white/10 transition-transform duration-300 md:relative md:translate-x-0 shadow-lg shadow-slate-900/5",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -73,7 +73,7 @@ export function Layout() {
             <Bug className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-800 tracking-tight leading-tight">Bug Triage Max</h1>
+            <h1 className="text-sm font-black text-slate-800 dark:text-white tracking-tight leading-tight">Bug Triage Max</h1>
             <p className="text-[10px] text-slate-400 font-mono mt-0.5">AI-Powered</p>
           </div>
         </Link>
@@ -102,8 +102,8 @@ export function Layout() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 group border",
                   isActive
-                    ? "bg-sky-500/10 text-sky-600 border-sky-500/20 shadow-sm shadow-sky-500/5"
-                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-transparent"
+                    ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 shadow-sm shadow-sky-500/5"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent"
                 )}
               >
                 <item.icon
@@ -121,7 +121,7 @@ export function Layout() {
 
         {/* System Health */}
         <div className="px-4 py-3 mx-3 mb-2">
-          <div className="glass-card p-3 rounded-2xl bg-white/50 border border-white/60">
+          <div className="glass-card p-3 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/60 dark:border-white/10">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-3.5 h-3.5 text-sky-500" />
               <span className="text-xs font-bold text-slate-500">System Health</span>
@@ -170,7 +170,7 @@ export function Layout() {
         <div className="px-6 py-2">
           <button
             onClick={toggleTheme}
-            className="flex items-center gap-3 text-slate-500 hover:text-slate-900 transition-colors w-full text-left"
+            className="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors w-full text-left"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             <span className="text-sm font-semibold">Toggle Theme</span>
@@ -188,7 +188,7 @@ export function Layout() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-700 truncate">{user?.name || "Guest"}</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{user?.name || "Guest Explorer"}</p>
               <p className="text-[10px] text-slate-400 truncate">{user?.email || "Not signed in"}</p>
             </div>
             {user && (
@@ -206,14 +206,14 @@ export function Layout() {
         <DemoBanner />
 
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-[#0f172a]/08 bg-white/80 backdrop-blur-md">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-[#0f172a]/08 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
               <Bug className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-sm font-black text-slate-800">Bug Triage Max</h1>
+            <h1 className="text-sm font-black text-slate-800 dark:text-white">Bug Triage Max</h1>
           </div>
-          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md">
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
             <Menu className="w-5 h-5" />
           </button>
         </div>

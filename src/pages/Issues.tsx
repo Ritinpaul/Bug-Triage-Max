@@ -8,6 +8,7 @@ import {
   Filter,
   User,
   Github,
+  Download,
 } from "lucide-react";
 import { GlassCard } from "@/components/GlassCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
@@ -63,13 +64,24 @@ export default function Issues() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
       >
-        <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-          Issues
-        </h1>
-        <p className="text-sm text-slate-450 mt-0.5 font-medium">
-          {data?.total || 0} bug reports tracked
-        </p>
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+            Issues
+          </h1>
+          <p className="text-sm text-slate-450 mt-0.5 font-medium">
+            {data?.total || 0} bug reports tracked
+          </p>
+        </div>
+        <a
+          href="/api/export/bugs.csv"
+          target="_blank"
+          className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-slate-200/60 rounded-xl text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-white shadow-sm transition-all"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </a>
       </motion.div>
 
       {/* Filters */}

@@ -11,9 +11,11 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
+import { Toaster } from "sonner";
 
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
@@ -34,5 +36,7 @@ export default function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    <Toaster position="top-right" richColors />
+    </>
   );
 }

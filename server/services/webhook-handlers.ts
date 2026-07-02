@@ -247,6 +247,80 @@ export function createWebhookRouter() {
     return c.json({ ok: true, messageId: id });
   });
 
+  // ── Sentry Webhook ───────────────────────────────────────────────────
+  webhook.post("/api/webhooks/sentry", async (c) => {
+    let body: any;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    
+    // Sentry issues webhooks usually have data.issue
+    const issue = body?.data?.issue;
+    if (!issue) {
+      return c.json({ error: "No issue data found in payload" }, 400);
+    }
+    
+    const title = issue.title || "Sentry Issue";
+    const value = issue.metadata?.value || "";
+    const rawContent = `[SENTRY] ${title}\n\n${value}\n\nURL: ${issue.permalink || ""}`;
+    const senderId = issue.id || "sentry_bot";
+    
+    const dup = await isDuplicate(senderId, rawContent);
+    if (dup) return c.json({ ok: true, duplicate: true });
+    
+    const id = await insertAndProcess({
+      source: "form", // using 'form' as generic webhook source since we don't have 'sentry' in schema yet
+      rawContent,
+      senderId,
+      senderName: "Sentry Integration",
+    });
+    
+    return c.json({ ok: true, messageId: id });
+  });
+
+  // ── GitHub Webhook ───────────────────────────────────────────────────
+  webhook.post("/api/webhooks/github", async (c) => {
+    const event = c.req.header("X-GitHub-Event");
+    if (event !== "issues") {
+      return c.json({ ok: true, ignored: true, reason: "Not an issues event" });
+    }
+    
+    let body: any;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    
+    if (body.action !== "opened") {
+      return c.json({ ok: true, ignored: true, reason: "Issue not opened" });
+    }
+    
+    const issue = body.issue;
+    if (!issue) {
+      return c.json({ error: "No issue data found" }, 400);
+    }
+    
+    const title = issue.title;
+    const desc = issue.body || "";
+    const rawContent = `[GITHUB] ${title}\n\n${desc}\n\nURL: ${issue.html_url}`;
+    const senderId = `github_${issue.id}`;
+    
+    const dup = await isDuplicate(senderId, rawContent);
+    if (dup) return c.json({ ok: true, duplicate: true });
+    
+    const id = await insertAndProcess({
+      source: "form", // mapping to 'form' as generic integration
+      rawContent,
+      senderId,
+      senderName: body.sender?.login || "GitHub Integration",
+    });
+    
+    return c.json({ ok: true, messageId: id });
+  });
+
   // ── Health check for webhooks ────────────────────────────────────────
   webhook.get("/api/webhooks/health", (c) => {
     return c.json({
@@ -257,6 +331,8 @@ export function createWebhookRouter() {
       },
       form: { endpoint: "/api/webhooks/form" },
       email: { polling: !!process.env.EMAIL_IMAP_HOST },
+      sentry: { endpoint: "/api/webhooks/sentry" },
+      github: { endpoint: "/api/webhooks/github" },
     });
   });
 
