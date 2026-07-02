@@ -1,0 +1,22 @@
+{
+  "name": "bug_reports",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "message_id", "type": "TEXT" },
+    { "name": "raw_content", "type": "TEXT", "required": true },
+    { "name": "source", "type": "ENUM", "default": "form", "options": ["slack", "email", "form", "webhook"] },
+    { "name": "status", "type": "ENUM", "default": "pending", "options": ["pending", "parsing", "triaged", "resolved", "closed"] },
+    { "name": "intent", "type": "ENUM", "options": ["bug_report", "feature_request", "complaint", "question", "other"] },
+    { "name": "component", "type": "ENUM", "options": ["auth", "billing", "ui", "api", "database", "notifications", "other"] },
+    { "name": "severity_label", "type": "ENUM", "options": ["P0", "P1", "P2", "P3"] },
+    { "name": "severity_score", "type": "INTEGER" },
+    { "name": "overall_confidence", "type": "FLOAT" },
+    { "name": "keywords", "type": "JSON" },
+    { "name": "reasoning", "type": "TEXT" },
+    { "name": "repro_steps", "type": "JSON" },
+    { "name": "github_issue_url", "type": "TEXT" },
+    { "name": "assignee", "type": "TEXT" },
+    { "name": "embedding", "type": "VECTOR" }
+  ]
+}

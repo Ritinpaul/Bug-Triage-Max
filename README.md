@@ -60,32 +60,30 @@ Slack Message / Email / Form
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion, Recharts |
-| **Backend** | Hono, tRPC 11.x, Drizzle ORM, MySQL |
-| **AI Agents** | Pattern matching (MVP) → LLM-powered (production) |
-| **Platform** | Lemma SDK for workflow orchestration |
-| **Integrations** | Slack Events API, IMAP, GitHub API |
+| **Backend** | Hono, tRPC 11.x, Drizzle ORM, SQLite |
+| **AI Agents** | Google Gemini (gemini-2.5-flash) |
+| **Platform** | Lemma SDK for agent observability and WebSocket data streams |
+| **Integrations** | GitHub API, Slack Events API, Webhooks |
 
 ---
 
 ## Features
 
-### Implemented (MVP)
+### Core Capabilities
 
 - **Multi-Channel Ingestion** — Slack, Email, Form submissions unified into single schema
-- **AI Parser Agent** — Intent classification (bug/feature/complaint/question), component extraction, severity inference
-- **Triage Agent** — Similar bug detection, priority scoring (0-100), auto-assignment to team members
-- **Reproduction Agent** — Step-by-step reproduction instructions from bug descriptions
-- **Real-Time Dashboard** — Dark glassmorphism UI with live bug stream, agent activity feed, system health
-- **GitHub Integration** — Auto-generated structured issue bodies ready for copy/paste
+- **Gemini-Powered Parser Agent** — Intent classification (bug/feature/complaint/question), component extraction, severity inference
+- **Intelligent Triage Agent** — Similar bug detection (via vector embeddings), priority scoring (0-100), auto-assignment to team members
+- **Reproduction Agent** — Step-by-step reproduction instructions inferred from unstructured bug descriptions
+- **Real-Time Dashboard** — Dark glassmorphism UI with a live bug stream, real-time agent activity feed, and system health
+- **Lemma SDK Integration** — Dual-write pod datastore synchronisation, providing live WebSockets (`useLemmaLiveStream`) and robust agent observability (`agent_activities`)
+- **GitHub Integration** — Auto-generated structured issue bodies synced to GitHub issues
 - **Analytics** — Component breakdown, severity distribution, agent performance metrics
 - **Team Management** — Expertise-based auto-assignment, on-call rotation
 
 ### Planned (see [future_steps.md](./future_steps.md))
 
 - Release Note Agent (auto-changelog from closed bugs)
-- Real LLM integration (OpenRouter/Anthropic)
-- Vector semantic search for similarity
-- WebSocket live updates
 - Mobile responsive design
 - Jira/Linear integration
 
@@ -96,7 +94,6 @@ Slack Message / Email / Form
 ### Prerequisites
 
 - Node.js 20+
-- MySQL 8+
 - npm or yarn
 
 ### 1. Clone & Install
@@ -110,17 +107,15 @@ npm install
 ### 2. Configure Environment
 
 ```bash
-# Database is auto-configured by the init script
-# For additional integrations, see mock.md
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your Gemini API key, GitHub PAT, and Lemma pod details.
 ```
 
 ### 3. Setup Database
 
 ```bash
 npm run db:push      # Sync schema
-npx tsx db/seed-direct.ts  # Seed with demo data
+npm run db:seed      # Seed with demo data
 ```
 
 ### 4. Run Development Server
@@ -144,7 +139,10 @@ The app runs at `http://localhost:3000`
 │   ├── router.ts                 # Main router
 │   ├── auth-router.ts            # OAuth routes
 │   ├── services/
-│   │   └── agent-service.ts      # AI agent logic
+│   │   ├── agent-service.ts      # Gemini AI agent orchestration
+│   │   ├── gemini-service.ts     # Google Gemini API client
+│   │   ├── github-service.ts     # GitHub API client
+│   │   └── lemma-service.ts      # Lemma SDK client & dual-write
 │   ├── routers/
 │   │   ├── messages.ts           # Message CRUD
 │   │   ├── bugs.ts               # Bug report CRUD
@@ -157,9 +155,7 @@ The app runs at `http://localhost:3000`
 ├── contracts/                    # Shared types
 ├── db/
 │   ├── schema.ts                 # Database schema
-│   ├── relations.ts              # Table relations
-│   ├── seed-direct.ts            # Seed script
-│   └── seed.ts                   # Seed script (ORM)
+│   └── relations.ts              # Table relations
 ├── src/                          # Frontend (React)
 │   ├── pages/                    # Route pages
 │   │   ├── Dashboard.tsx
@@ -168,18 +164,12 @@ The app runs at `http://localhost:3000`
 │   │   ├── Analytics.tsx
 │   │   └── Settings.tsx
 │   ├── components/               # Shared components
-│   │   ├── Layout.tsx
-│   │   ├── GlassCard.tsx
-│   │   ├── PriorityBadge.tsx
-│   │   ├── SourceBadge.tsx
-│   │   ├── ConfidenceRing.tsx
-│   │   └── AgentActivityFeed.tsx
+│   ├── hooks/
+│   │   ├── useAuth.ts            # Auth hook
+│   │   └── useLemmaLiveStream.ts # Real-time WebSockets
 │   ├── providers/trpc.tsx        # tRPC client
-│   ├── hooks/useAuth.ts          # Auth hook
 │   ├── App.tsx                   # Routes
 │   └── main.tsx                  # Entry point
-├── public/
-│   └── architecture-diagram.png
 ├── mock.md                       # API keys & integrations guide
 ├── future_steps.md               # Roadmap
 └── README.md                     # This file
@@ -193,7 +183,7 @@ The app runs at `http://localhost:3000`
 
 | Table | Purpose |
 |-------|---------|
-| `users` | OAuth users (admin roles) |
+| `users` | Local Users / Auth |
 | `team_members` | Engineers with expertise & on-call status |
 | `messages` | Raw ingested messages from all channels |
 | `parsed_results` | AI parser output (intent, component, severity) |
@@ -202,7 +192,6 @@ The app runs at `http://localhost:3000`
 | `reproduction_steps` | Generated reproduction steps |
 | `agent_activities` | Agent execution log |
 | `integration_status` | External service health |
-| `analytics_snapshots` | Aggregated metrics snapshots |
 
 ---
 
@@ -216,7 +205,7 @@ The app runs at `http://localhost:3000`
 | `analytics.*` | overview, timeSeries, performance |
 | `integrations.*` | list, get, check, checkAll |
 | `team.*` | list, getByHandle, create, update, delete |
-| `auth.*` | OAuth login flow (auto-wired) |
+| `auth.*` | me, login, logout |
 
 ---
 
@@ -226,11 +215,11 @@ All external integrations are documented in **[mock.md](./mock.md)**. Key integr
 
 | Service | Status | Config |
 |---------|--------|--------|
-| GitHub | Ready | `GITHUB_PAT` env var |
+| Gemini | ✅ Active | `GEMINI_API_KEY` |
+| Lemma SDK | ✅ Active | `LEMMA_TOKEN`, `LEMMA_POD_ID`, `LEMMA_ORG_ID` |
+| GitHub | ✅ Active | `GITHUB_PAT`, `GITHUB_OWNER`, `GITHUB_REPO` |
 | Slack | Ready | `SLACK_BOT_TOKEN` env var |
 | Email (IMAP) | Ready | `EMAIL_IMAP_*` env vars |
-| Lemma SDK | Ready | `LEMMA_API_KEY` env var |
-| LLM (OpenRouter) | Ready | `LLM_API_KEY` env var |
 
 ---
 

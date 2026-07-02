@@ -22,6 +22,16 @@ import {
   cosineSimilarity,
   geminiAvailable,
 } from "./gemini-service";
+import {
+  writeBugReportToLemma,
+  logAgentActivityToLemma,
+  updateBugReportInLemma,
+  lemmaAvailable,
+} from "./lemma-service";
+
+// Lemma record ID cache: messageId → lemma record ID
+// Allows later stages to update the same Lemma record
+const lemmaRecordCache = new Map<number, string>();
 
 // ─── Intent Classification (pattern fallback) ─────────────────────────
 const INTENT_PATTERNS: Record<string, RegExp[]> = {
@@ -224,6 +234,35 @@ export async function runParserAgent(messageId: number) {
       engine: usedGemini ? "gemini" : "pattern",
     },
   });
+
+  // ── Dual-write to Lemma pod (non-blocking) ────────────────────────────
+  if (lemmaAvailable) {
+    writeBugReportToLemma({
+      message_id: String(messageId),
+      raw_content: message.rawContent,
+      source: (message.source as "slack" | "email" | "form" | "webhook") ?? "form",
+      status: "parsing",
+      intent: intent as "bug_report" | "feature_request" | "complaint" | "question" | "other",
+      component: component as "auth" | "billing" | "ui" | "api" | "database" | "notifications" | "other",
+      severity_label: severityLabel as "P0" | "P1" | "P2" | "P3",
+      severity_score: severityScore,
+      overall_confidence: overallConfidence,
+      keywords,
+      reasoning: usedGemini ? `Gemini AI: intent=${intent}, component=${component}` : `Pattern match: intent=${intent}, component=${component}`,
+      embedding: embedding ?? undefined,
+    }).then((rec) => {
+      if (rec?.id) lemmaRecordCache.set(messageId, rec.id);
+    }).catch(() => {/* non-critical */});
+
+    logAgentActivityToLemma({
+      agent_name: "parser",
+      action: `[${usedGemini ? "Gemini" : "Pattern"}] Intent: ${intent}, Component: ${component}, Severity: ${severityLabel}`,
+      status: "success",
+      message_id: String(messageId),
+      duration_ms: duration,
+      output_summary: `intent=${intent} confidence=${overallConfidence.toFixed(2)}`,
+    }).catch(() => {/* non-critical */});
+  }
 
   return {
     parsedResultId: parsed.id,
@@ -566,6 +605,21 @@ export async function processMessage(messageId: number) {
     if (parseResult.intentResult.intent === "bug_report") {
       const triageResult = await runTriageAgent(messageId, parseResult.parsedResultId);
       await runReproductionAgent(triageResult.bugId);
+
+      // Update Lemma record to triaged status (non-blocking)
+      const lemmaId = lemmaRecordCache.get(messageId);
+      if (lemmaId && lemmaAvailable) {
+        updateBugReportInLemma(lemmaId, { status: "triaged" }).catch(() => {/* non-critical */});
+        logAgentActivityToLemma({
+          agent_name: "orchestrator",
+          action: "Pipeline complete: Parser → Triage → Repro",
+          status: "success",
+          bug_report_id: lemmaId,
+          message_id: String(messageId),
+          output_summary: `bugId=${triageResult.bugId}`,
+        }).catch(() => {/* non-critical */});
+      }
+
       return { ...parseResult, ...triageResult, complete: true };
     }
     return { ...parseResult, complete: false, reason: "Not a bug report" };
@@ -580,6 +634,18 @@ export async function processMessage(messageId: number) {
       status: "failed",
       details: { error: errMsg },
     });
+
+    // Log failure to Lemma (non-blocking)
+    if (lemmaAvailable) {
+      logAgentActivityToLemma({
+        agent_name: "orchestrator",
+        action: "Pipeline failed",
+        status: "failed",
+        message_id: String(messageId),
+        error: errMsg,
+      }).catch(() => {/* non-critical */});
+    }
+
     throw error;
   }
 }

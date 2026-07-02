@@ -20,6 +20,11 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
+.agents
+graphify-out
+info.md
+future_steps.md
+mock.md
 *.sln
 *.sw?
 # Environment variables

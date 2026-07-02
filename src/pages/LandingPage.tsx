@@ -120,7 +120,7 @@ function PricingCard({
         ))}
       </ul>
       <Link
-        to="/dashboard"
+        to="/login"
         className={`mt-8 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold transition-all ${
           highlighted
             ? "bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/30"
@@ -166,13 +166,17 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 z-10 flex-shrink-0">
-              <Link to="/login" className="text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/10 px-4 sm:px-5 py-2.5 rounded-full transition-colors whitespace-nowrap">
+            <div className="flex items-center gap-3 z-10 flex-shrink-0">
+              <Link
+                to="/login"
+                className="text-sm font-semibold text-white/80 hover:text-white transition-colors whitespace-nowrap hidden sm:block"
+              >
                 Log In
               </Link>
+              <div className="hidden sm:block w-px h-4 bg-white/20" />
               <Link
-                to="/dashboard"
-                className="text-sm font-bold text-[#0f172a] bg-white hover:bg-gray-100 px-5 sm:px-6 py-2.5 rounded-full transition-all whitespace-nowrap hidden sm:block"
+                to="/login"
+                className="text-sm font-bold text-[#0f172a] bg-white hover:bg-gray-100 px-5 py-2.5 rounded-full transition-all whitespace-nowrap shadow-sm"
               >
                 Start Today
               </Link>
@@ -249,7 +253,7 @@ export default function LandingPage() {
             className="flex items-center justify-center gap-4"
           >
             <Link
-              to="/dashboard"
+              to="/login"
               className="group flex items-center gap-2 px-8 py-4 bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold rounded-2xl transition-all text-sm shadow-xl shadow-black/10"
             >
               Start Today
@@ -390,7 +394,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link
-              to="/dashboard"
+              to="/login"
               className="group flex items-center gap-2 px-8 py-4 bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold rounded-2xl transition-all text-sm shadow-xl shadow-black/10"
             >
               Get Started Free

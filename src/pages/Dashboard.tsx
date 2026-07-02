@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { trpc } from "@/providers/trpc";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Bug,
@@ -17,6 +18,8 @@ import {
   Users,
   BarChart3,
   Sparkles,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { GlassCard } from "@/components/GlassCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
@@ -24,6 +27,7 @@ import { SourceBadge } from "@/components/SourceBadge";
 import { ConfidenceRing } from "@/components/ConfidenceRing";
 import { AgentActivityFeed } from "@/components/AgentActivityFeed";
 import { SimulateBugModal } from "@/components/SimulateBugModal";
+import { useLemmaLiveStream } from "@/hooks/useLemmaLiveStream";
 import { useState } from "react";
 
 const container = {
@@ -42,11 +46,24 @@ const item = {
 export default function Dashboard() {
   const [sourceFilter, setSourceFilter] = useState<"all" | "slack" | "email" | "form">("all");
   const [simulateOpen, setSimulateOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: bugStats } = trpc.bugs.stats.useQuery();
   const { data: messageStats } = trpc.messages.stats.useQuery();
   const { data: recentMessages } = trpc.messages.recent.useQuery({ limit: 8, source: sourceFilter });
   const { data: activities } = trpc.agents.activities.useQuery({ limit: 6 });
+
+  // ─ Lemma live stream ─ auto-invalidate queries on new bug events
+  const { status: lemmaStatus } = useLemmaLiveStream({
+    table: "bug_reports",
+    onChange: () => {
+      // Invalidate dashboard data when Lemma pushes a new record change
+      void queryClient.invalidateQueries();
+    },
+  });
+
+  const lemmaOnline = lemmaStatus === "open";
+  const lemmaReconnecting = lemmaStatus === "reconnecting" || lemmaStatus === "connecting";
 
   const openBugs = bugStats?.open || 0;
   const inProgress = bugStats?.inProgress || 0;
@@ -78,9 +95,35 @@ export default function Dashboard() {
             <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
             Simulate Bug
           </button>
-          <span className="flex items-center gap-2 text-xs text-sky-600 bg-sky-500/10 px-3 py-1.5 rounded-full font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-            Live
+          {/* Lemma live stream status badge */}
+          <span
+            title={`Lemma pod stream: ${lemmaStatus}`}
+            className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-bold transition-all ${
+              lemmaOnline
+                ? "text-emerald-600 bg-emerald-500/10"
+                : lemmaReconnecting
+                ? "text-amber-600 bg-amber-500/10"
+                : "text-slate-400 bg-slate-100"
+            }`}
+          >
+            {lemmaOnline ? (
+              <>
+                <Wifi className="w-3 h-3" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Lemma Live
+              </>
+            ) : lemmaReconnecting ? (
+              <>
+                <Wifi className="w-3 h-3" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3 h-3" />
+                Lemma Offline
+              </>
+            )}
           </span>
         </div>
       </motion.div>

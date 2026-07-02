@@ -1,0 +1,15 @@
+{
+  "name": "agent_activities",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "agent_name", "type": "TEXT", "required": true },
+    { "name": "action", "type": "TEXT", "required": true },
+    { "name": "status", "type": "ENUM", "options": ["running", "success", "failed", "skipped"], "default": "running" },
+    { "name": "bug_report_id", "type": "UUID" },
+    { "name": "message_id", "type": "TEXT" },
+    { "name": "duration_ms", "type": "INTEGER" },
+    { "name": "output_summary", "type": "TEXT" },
+    { "name": "error", "type": "TEXT" }
+  ]
+}

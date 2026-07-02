@@ -4,6 +4,7 @@ import { getDb } from "../queries/connection";
 import { integrationStatus } from "../../db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkRateLimit, githubConfigured } from "../services/github-service";
+import { checkLemmaHealth } from "../services/lemma-service";
 
 /**
  * Integration Status Router
@@ -137,10 +138,7 @@ function checkEmail(): { status: "online" | "offline"; responseTime: number; met
   };
 }
 
-function checkLemma(): { status: "online" | "offline"; responseTime: number; metadata: Record<string, unknown>; error?: string } {
-  // Lemma SDK — not integrated yet, report offline
-  return { status: "offline", responseTime: 0, metadata: { configured: false, note: "Lemma SDK integration pending" } };
-}
+
 
 // ─── Helper: upsert integration_status row ────────────────────────────
 async function upsertStatus(
@@ -212,7 +210,7 @@ export const integrationRouter = createRouter({
           result = await checkGemini();
           break;
         case "lemma":
-          result = checkLemma();
+          result = await checkLemmaHealth();
           break;
         default:
           result = { status: "offline", responseTime: 0, metadata: {} };
@@ -231,13 +229,13 @@ export const integrationRouter = createRouter({
 
   // Batch check all integrations — real API pings
   checkAll: publicQuery.mutation(async () => {
-    const [github, slack, gemini] = await Promise.all([
+    const [github, slack, gemini, lemma] = await Promise.all([
       checkGitHub(),
       checkSlack(),
       checkGemini(),
+      checkLemmaHealth(),
     ]);
     const email = checkEmail();
-    const lemma = checkLemma();
 
     const results = [
       { service: "github" as const, ...github },

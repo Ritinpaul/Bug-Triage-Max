@@ -9,7 +9,7 @@ import "dotenv/config";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.5-flash"; // confirmed working on this API key
 
 // ─── Core Gemini call ─────────────────────────────────────────────────
 async function callGemini(
@@ -256,19 +256,21 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
 
   try {
     const res = await fetch(
-      `${GEMINI_BASE}/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+      `${GEMINI_BASE}/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "models/text-embedding-004",
+          model: "models/gemini-embedding-001",
           content: { parts: [{ text }] },
-          taskType: "SEMANTIC_SIMILARITY",
         }),
       }
     );
 
-    if (!res.ok) throw new Error(`Embedding API ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Embedding API ${res.status}: ${errText}`);
+    }
 
     const json = (await res.json()) as {
       embedding?: { values?: number[] };
