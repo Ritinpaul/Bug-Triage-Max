@@ -8,7 +8,7 @@ import {
   parsedResults,
   reproductionSteps,
 } from "../../db/schema";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { eq, and, isNotNull, sql } from "drizzle-orm";
 import {
   createGitHubIssue,
   getGitHubIssue,
@@ -32,108 +32,76 @@ export const bugRouter = createRouter({
         .optional()
     )
     .query(async ({ input }) => {
-      const pg = getPg();
+      const db = getDb();
       const opts = input || { status: "all" as const, severity: "all" as const, limit: 50, offset: 0 };
 
-      // Build WHERE clauses dynamically
-      const conditions: string[] = [];
-      const params: unknown[] = [];
-      let p = 1;
+      // Build WHERE clauses dynamically using Drizzle conditions
+      const conditions = [];
 
       if (opts.status && opts.status !== "all") {
-        conditions.push(`status = $${p++}`);
-        params.push(opts.status);
+        conditions.push(eq(bugReports.status, opts.status as any));
       }
       if ("component" in opts && opts.component) {
-        conditions.push(`component = $${p++}`);
-        params.push(opts.component);
+        conditions.push(eq(bugReports.component, opts.component));
       }
       if ("severity" in opts && opts.severity && opts.severity !== "all") {
-        conditions.push(`severity = $${p++}`);
-        params.push(opts.severity);
+        conditions.push(eq(bugReports.severity, opts.severity as any));
       }
       if ("assignee" in opts && opts.assignee) {
-        conditions.push(`assignee_handle = $${p++}`);
-        params.push(opts.assignee);
+        conditions.push(eq(bugReports.assigneeHandle, opts.assignee));
       }
       if ("search" in opts && opts.search) {
-        conditions.push(`title ILIKE $${p++}`);
-        params.push(`%${opts.search}%`);
+        conditions.push(sql`${bugReports.title} ILIKE ${'%' + opts.search + '%'}`);
       }
 
-      const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
       const limit = opts.limit ?? 50;
       const offset = opts.offset ?? 0;
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      const items = await pg.unsafe(`
-        SELECT * FROM bug_reports ${where}
-        ORDER BY priority_score DESC, created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `, params as any[]);
+      const items = await db.select().from(bugReports)
+        .where(whereClause)
+        .orderBy(sql`priority_score DESC, created_at DESC`)
+        .limit(limit)
+        .offset(offset);
 
-      const countRows = await pg.unsafe(`SELECT count(*) as total FROM bug_reports ${where}`, params as any[]);
-      const total = Number(countRows[0]?.total || 0);
+      const countResult = await db.select({ total: sql`count(*)` }).from(bugReports).where(whereClause);
+      const total = Number(countResult[0]?.total || 0);
 
-      const bugIds = items.map((b: any) => b.id);
+      const bugIds = items.map((b) => b.id);
       let reprosByBugId: Record<number, any> = {};
       let similarByBugId: Record<number, any[]> = {};
 
       if (bugIds.length > 0) {
-        const repros = await pg`SELECT * FROM reproduction_steps WHERE bug_report_id IN ${pg(bugIds)}`;
-        repros.forEach((r: any) => {
-          reprosByBugId[r.bug_report_id] = r;
+        const repros = await db.select().from(reproductionSteps)
+          .where(sql`bug_report_id IN ${bugIds}`);
+        repros.forEach((r) => {
+          reprosByBugId[r.bugReportId] = r;
         });
 
-        const similars = await pg`
-          SELECT * FROM similar_bug_matches WHERE bug_report_id IN ${pg(bugIds)}
-          ORDER BY similarity_score DESC
-        `;
-        similars.forEach((s: any) => {
-          if (!similarByBugId[s.bug_report_id]) similarByBugId[s.bug_report_id] = [];
-          if (similarByBugId[s.bug_report_id].length < 3) {
-            similarByBugId[s.bug_report_id].push(s);
+        const similars = await db.select().from(similarBugMatches)
+          .where(sql`bug_report_id IN ${bugIds}`)
+          .orderBy(sql`similarity_score DESC`);
+        similars.forEach((s) => {
+          if (!similarByBugId[s.bugReportId]) similarByBugId[s.bugReportId] = [];
+          if (similarByBugId[s.bugReportId].length < 3) {
+            similarByBugId[s.bugReportId].push(s);
           }
         });
       }
 
       // Enrich with repro and similar bugs
-      const enriched = items.map((bug: any) => {
+      const enriched = items.map((bug) => {
         const repro = reprosByBugId[bug.id];
         const similar = similarByBugId[bug.id] || [];
         return {
-          id: bug.id,
-          messageId: bug.message_id,
-          parsedResultId: bug.parsed_result_id,
-          title: bug.title,
-          description: bug.description,
-          source: bug.source,
-          component: bug.component,
-          severity: bug.severity,
-          priorityScore: Number(bug.priority_score),
-          status: bug.status,
-          assigneeId: bug.assignee_id,
-          assigneeHandle: bug.assignee_handle,
-          githubIssueId: bug.github_issue_id,
-          githubIssueUrl: bug.github_issue_url,
-          duplicateOfId: bug.duplicate_of_id,
-          resolutionTime: bug.resolution_time,
-          createdAt: bug.created_at,
-          updatedAt: bug.updated_at,
-          resolvedAt: bug.resolved_at,
+          ...bug,
+          priorityScore: Number(bug.priorityScore),
           reproduction: repro ? {
-            id: repro.id,
-            bugReportId: repro.bug_report_id,
-            steps: repro.steps,
-            expectedBehavior: repro.expected_behavior,
-            actualBehavior: repro.actual_behavior,
-            errorLogSummary: repro.error_log_summary,
+            ...repro,
           } : null,
           similarBugs: similar.map((s: any) => ({
-            id: s.id,
-            bugReportId: s.bug_report_id,
-            similarBugId: s.similar_bug_id,
-            similarityScore: Number(s.similarity_score),
-            reason: s.reason,
+            ...s,
+            similarityScore: Number(s.similarityScore),
           })),
         };
       });

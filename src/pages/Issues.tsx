@@ -12,6 +12,8 @@ import {
 import { GlassCard } from "@/components/GlassCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { SourceBadge } from "@/components/SourceBadge";
+import { BugListSkeleton } from "@/components/BugListSkeleton";
+import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 
 const statusFilters = ["all", "open", "in_progress", "resolved", "closed"] as const;
@@ -31,6 +33,10 @@ export default function Issues() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const limit = 50;
+  
+  const debouncedSearch = useDebounce(search, 300);
 
   const utils = trpc.useUtils();
   const { data: teamMembers } = trpc.team.list.useQuery();
@@ -38,9 +44,9 @@ export default function Issues() {
   const { data, isLoading } = trpc.bugs.list.useQuery({
     status: statusFilter as "open" | "in_progress" | "resolved" | "closed" | "all",
     severity: severityFilter as "P0" | "P1" | "P2" | "P3" | "all",
-    search: search || undefined,
-    limit: 50,
-    offset: 0,
+    search: debouncedSearch || undefined,
+    limit,
+    offset: (page - 1) * limit,
   });
 
   const assignMutation = trpc.bugs.assign.useMutation({
@@ -79,7 +85,10 @@ export default function Issues() {
             type="text"
             placeholder="Search issues..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2.5 bg-white/50 border border-slate-200/60 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 transition-all shadow-sm"
           />
         </div>
@@ -90,7 +99,10 @@ export default function Issues() {
             {statusFilters.map((s) => (
               <button
                 key={s}
-                onClick={() => setStatusFilter(s)}
+                onClick={() => {
+                  setStatusFilter(s);
+                  setPage(1);
+                }}
                 className={`px-3 py-1.5 rounded-lg text-[11px] font-bold capitalize transition-all ${
                   statusFilter === s
                     ? "bg-sky-500/10 text-sky-600 shadow-sm"
@@ -107,7 +119,10 @@ export default function Issues() {
           {severityFilters.map((s) => (
             <button
               key={s}
-              onClick={() => setSeverityFilter(s)}
+              onClick={() => {
+                setSeverityFilter(s);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
                 severityFilter === s
                   ? "bg-sky-500/10 text-sky-600 shadow-sm"
@@ -136,8 +151,8 @@ export default function Issues() {
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-400 text-sm font-medium">
-            Loading issues...
+          <div className="p-4">
+            <BugListSkeleton />
           </div>
         ) : (
           <motion.div
@@ -244,16 +259,24 @@ export default function Issues() {
         )}
 
         {/* Pagination */}
-        {data && data.total > 50 && (
+        {data && data.total > limit && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-[#0f172a]/08">
             <span className="text-xs text-slate-400 font-medium">
-              Showing {data.items.length} of {data.total}
+              Showing {(page - 1) * limit + 1} - {Math.min(page * limit, data.total)} of {data.total}
             </span>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1.5 text-xs text-slate-450 bg-white/50 rounded-lg hover:bg-slate-100/50 transition-colors border border-slate-200/40">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 text-xs text-slate-450 bg-white/50 rounded-lg hover:bg-slate-100/50 transition-colors border border-slate-200/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Previous
               </button>
-              <button className="px-3 py-1.5 text-xs text-slate-450 bg-white/50 rounded-lg hover:bg-slate-100/50 transition-colors border border-slate-200/40">
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={page * limit >= data.total}
+                className="px-3 py-1.5 text-xs text-slate-450 bg-white/50 rounded-lg hover:bg-slate-100/50 transition-colors border border-slate-200/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Next
               </button>
             </div>

@@ -1,7 +1,7 @@
 import * as cookie from "cookie";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
-import { createRouter, authedQuery, publicQuery } from "./middleware";
+import { createRouter, authedQuery, publicQuery, rateLimitMiddleware } from "./middleware";
 import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 import { upsertUser } from "./queries/users";
@@ -30,7 +30,7 @@ export const authRouter = createRouter({
     );
     return { success: true };
   }),
-  guestLogin: publicQuery.mutation(async ({ ctx }) => {
+  guestLogin: publicQuery.use(rateLimitMiddleware(5, 15 * 60 * 1000)).mutation(async ({ ctx }) => {
     // 1. Create a guest user
     const guestId = `guest-${crypto.randomUUID()}`;
     await upsertUser({
@@ -98,7 +98,7 @@ export const authRouter = createRouter({
 
     return { success: true };
   }),
-  register: publicQuery.input(z.object({
+  register: publicQuery.use(rateLimitMiddleware(5, 15 * 60 * 1000)).input(z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email"),
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -131,7 +131,7 @@ export const authRouter = createRouter({
     );
     return { success: true };
   }),
-  login: publicQuery.input(z.object({
+  login: publicQuery.use(rateLimitMiddleware(10, 15 * 60 * 1000)).input(z.object({
     email: z.string().email("Invalid email"),
     password: z.string().min(1, "Password is required"),
   })).mutation(async ({ input, ctx }) => {

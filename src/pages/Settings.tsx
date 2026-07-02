@@ -18,10 +18,14 @@ import {
   Loader2,
   ExternalLink,
   Activity,
+  Moon,
+  Sun,
+  Monitor
 } from "lucide-react";
 import { GlassCard } from "@/components/GlassCard";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const serviceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   github: Github,
@@ -82,6 +86,42 @@ export default function Settings() {
         <p className="text-sm text-slate-455 mt-0.5 font-medium">
           Manage integrations, team, and system configuration
         </p>
+      </motion.div>
+
+      {/* Appearance */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
+        <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
+          <Moon className="w-4 h-4 text-sky-500" />
+          Appearance
+        </h2>
+        <GlassCard className="p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-bold text-slate-700">Theme Preference</p>
+              <p className="text-[11px] text-slate-450 font-medium">Select your preferred color scheme</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            {(["light", "dark", "system"] as const).map((t) => {
+              const { theme, setTheme } = useTheme();
+              const Icon = t === "light" ? Sun : t === "dark" ? Moon : Monitor;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
+                    theme === t
+                      ? "bg-sky-500/10 border-sky-500 text-sky-600 shadow-sm"
+                      : "bg-white/50 border-slate-200/50 text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon className="w-5 h-5 mb-2" />
+                  <span className="text-xs font-bold capitalize">{t}</span>
+                </button>
+              );
+            })}
+          </div>
+        </GlassCard>
       </motion.div>
 
       {/* Integration Health */}

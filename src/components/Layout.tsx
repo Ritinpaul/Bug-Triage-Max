@@ -14,11 +14,14 @@ import {
   FileText,
   Loader2,
   Menu,
-  X,
   Home,
+  Moon,
+  Sun,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/providers/trpc";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -37,6 +40,7 @@ export function Layout() {
   useLiveStream();
 
   const { data: healthData } = trpc.agents.health.useQuery();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gradient-to-b from-[#e0f0fc] to-[#f0f7ff] text-[#0f172a]">
@@ -160,6 +164,17 @@ export function Layout() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Theme Toggle */}
+        <div className="px-6 py-2">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 text-slate-500 hover:text-slate-900 transition-colors w-full text-left"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="text-sm font-semibold">Toggle Theme</span>
+          </button>
         </div>
 
         {/* User */}

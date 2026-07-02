@@ -98,7 +98,9 @@ export const parsedResults = pgTable("parsed_results", {
   entities: json("entities").$type<Record<string, unknown>>(),
   flaggedForReview: integer("flagged_for_review").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_parsed_message_id").on(table.messageId),
+]);
 
 export type ParsedResult = typeof parsedResults.$inferSelect;
 
@@ -130,6 +132,8 @@ export const bugReports = pgTable(
     index("idx_status_component").on(table.status, table.component),
     index("idx_assignee").on(table.assigneeId),
     index("idx_severity").on(table.severity),
+    index("idx_bug_message_id").on(table.messageId),
+    index("idx_bug_parsed_result").on(table.parsedResultId),
   ]
 );
 
@@ -143,7 +147,10 @@ export const similarBugMatches = pgTable("similar_bug_matches", {
   similarityScore: real("similarity_score").notNull(),
   isDuplicate: integer("is_duplicate").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_similar_bug_report").on(table.bugReportId),
+  index("idx_similar_bug_match").on(table.similarBugId),
+]);
 
 export type SimilarBugMatch = typeof similarBugMatches.$inferSelect;
 
@@ -159,7 +166,9 @@ export const reproductionSteps = pgTable("reproduction_steps", {
   accuracyScore: real("accuracy_score"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_repro_bug_report").on(table.bugReportId),
+]);
 
 export type ReproductionSteps = typeof reproductionSteps.$inferSelect;
 
