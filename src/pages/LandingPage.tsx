@@ -178,7 +178,7 @@ export default function LandingPage() {
                 to="/login"
                 className="text-sm font-bold text-[#0f172a] bg-white hover:bg-gray-100 px-5 py-2.5 rounded-full transition-all whitespace-nowrap shadow-sm"
               >
-                Start Today
+                Sign Up
               </Link>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function LandingPage() {
               to="/login"
               className="group flex items-center gap-2 px-8 py-4 bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold rounded-2xl transition-all text-sm shadow-xl shadow-black/10"
             >
-              Start Today
+              Sign Up
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <a

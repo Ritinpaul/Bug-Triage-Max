@@ -8,6 +8,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import ReleaseNotes from "./pages/ReleaseNotes";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 
@@ -17,6 +18,7 @@ export default function App() {
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
       {/* Protected app routes — unauthenticated users are redirected to /login */}
       <Route element={<ProtectedRoute />}>

@@ -6,9 +6,13 @@ import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 import { upsertUser } from "./queries/users";
 import { getDb } from "./queries/connection";
-import { messages } from "../db/schema";
+import { messages, users } from "../db/schema";
 import { processMessage } from "./services/agent-service";
 import crypto from "crypto";
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const authRouter = createRouter({
   me: authedQuery.query((opts) => opts.ctx.user),
@@ -92,6 +96,65 @@ export const authRouter = createRouter({
       }, 200);
     }
 
+    return { success: true };
+  }),
+  register: publicQuery.input(z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+  })).mutation(async ({ input, ctx }) => {
+    const db = getDb();
+    const existing = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
+    if (existing.length > 0) {
+      throw new TRPCError({ code: "CONFLICT", message: "Email already in use" });
+    }
+    
+    const passwordHash = await bcrypt.hash(input.password, 10);
+    const unionId = `user-${crypto.randomUUID()}`;
+    
+    await upsertUser({
+      unionId,
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      lastSignInAt: new Date(),
+    });
+    
+    const token = await signSessionToken({ unionId, clientId: env.appId });
+    const opts = getSessionCookieOptions(ctx.req.headers);
+    ctx.resHeaders.append(
+      "set-cookie",
+      cookie.serialize(Session.cookieName, token, {
+        ...opts,
+        maxAge: Session.maxAgeMs / 1000,
+      } as any),
+    );
+    return { success: true };
+  }),
+  login: publicQuery.input(z.object({
+    email: z.string().email("Invalid email"),
+    password: z.string().min(1, "Password is required"),
+  })).mutation(async ({ input, ctx }) => {
+    const db = getDb();
+    const [user] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
+    if (!user || !user.passwordHash) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+    }
+    
+    const isValid = await bcrypt.compare(input.password, user.passwordHash);
+    if (!isValid) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+    }
+    
+    const token = await signSessionToken({ unionId: user.unionId, clientId: env.appId });
+    const opts = getSessionCookieOptions(ctx.req.headers);
+    ctx.resHeaders.append(
+      "set-cookie",
+      cookie.serialize(Session.cookieName, token, {
+        ...opts,
+        maxAge: Session.maxAgeMs / 1000,
+      } as any),
+    );
     return { success: true };
   }),
 });

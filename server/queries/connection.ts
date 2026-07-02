@@ -8,17 +8,18 @@ const fullSchema = { ...schema, ...relations };
 
 // Use globalThis to store the connection to prevent leaks during HMR
 const globalForDb = globalThis as unknown as {
-  _pgClient?: ReturnType<typeof postgres>;
+  _pgClient2?: ReturnType<typeof postgres>;
 };
 
-const client = globalForDb._pgClient ?? postgres(env.databaseUrl, {
+const client = globalForDb._pgClient2 ?? postgres(env.databaseUrl, {
   // Supabase requires SSL in all environments (dev and production)
   ssl: "require",
   max: 10, // connection pool
+  prepare: false, // Required for PgBouncer/Supabase pooler
 });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForDb._pgClient = client;
+  globalForDb._pgClient2 = client;
 }
 
 const db = drizzle(client, { schema: fullSchema });
