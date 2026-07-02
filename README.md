@@ -280,6 +280,8 @@ npm install && npm run build && npm link
 bugpulse config --api-url http://localhost:3000
 bugpulse list --status open --severity P0
 bugpulse stats
+bugpulse open
+bugpulse watch --interval 5
 ```
 
 Full documentation: [packages/bugpulse-cli](packages/bugpulse-cli/README.md)
