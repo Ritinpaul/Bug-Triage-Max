@@ -49,25 +49,27 @@ async function seed() {
   `);
   console.log("  Seeded 5 integration statuses");
 
-  // Messages with pipeline data
+  // Messages with pipeline data — timestamps spread across last 7 days for trend charts
   const msgs = [
-    { s: "slack", r: "wtf the login button is broken again, i click it and nothing happens", sid: "U12345", sn: "Sarah Johnson", se: "sarah@customer.com", ch: "#bugs", st: "reproduced", hrs: 2 },
-    { s: "email", r: "Can't see my invoice for June. The billing page shows a blank screen after I log in. This is urgent as our accounting team needs it today.", sid: "acct@enterprise.com", sn: "Accounting Team", se: "acct@enterprise.com", ch: "Invoice Issue - June", st: "reproduced", hrs: 5 },
-    { s: "form", r: "The API returns 500 errors when I try to create a new user with the /v1/users endpoint. This started happening after yesterday's deployment.", sid: "dev-456", sn: "Mike Ross", se: "mike@partner.com", ch: "API Bug Report", st: "reproduced", hrs: 8 },
-    { s: "slack", r: "The notification bell icon is not showing the red badge even though I have unread messages. Refreshing the page doesn't help.", sid: "U67890", sn: "Emily Davis", se: "emily@company.com", ch: "#frontend", st: "triaged", hrs: 12 },
-    { s: "email", r: "Database query timeout on the analytics dashboard. Loading the monthly report takes over 30 seconds and eventually fails. Our team uses this daily.", sid: "ops@company.com", sn: "Ops Team", se: "ops@company.com", ch: "Analytics Dashboard Timeout", st: "reproduced", hrs: 18 },
-    { s: "slack", r: "Can you add dark mode to the dashboard? The current light theme is hard on the eyes during night shifts.", sid: "U11111", sn: "Night Shift Crew", se: "night@company.com", ch: "#feature-requests", st: "parsed", hrs: 24 },
-    { s: "form", r: "The password reset email is not being sent. I've tried 3 times and checked my spam folder. This is blocking 5 users from accessing their accounts.", sid: "support-789", sn: "Support Team", se: "support@company.com", ch: "Password Reset Failure", st: "reproduced", hrs: 6 },
-    { s: "slack", r: "The export to CSV button on the users table doesn't do anything when clicked. Chrome latest version.", sid: "U22222", sn: "Jane Smith", se: "jane@company.com", ch: "#ui-issues", st: "triaged", hrs: 14 },
-    { s: "email", r: "Webhook deliveries are failing with SSL certificate errors since this morning. Our integration partners can't receive events.", sid: "integration@partner.com", sn: "Partner Integration", se: "integration@partner.com", ch: "Webhook SSL Errors", st: "reproduced", hrs: 10 },
-    { s: "slack", r: "How do I set up two-factor authentication for my team? The docs mention it but I can't find the setting.", sid: "U33333", sn: "Team Lead", se: "lead@customer.com", ch: "#general", st: "parsed", hrs: 20 },
+    { s: "slack", r: "wtf the login button is broken again, i click it and nothing happens", sid: "U12345", sn: "Sarah Johnson", se: "sarah@customer.com", ch: "#bugs", st: "reproduced", daysAgo: 0 },
+    { s: "email", r: "Can't see my invoice for June. The billing page shows a blank screen after I log in. This is urgent as our accounting team needs it today.", sid: "acct@enterprise.com", sn: "Accounting Team", se: "acct@enterprise.com", ch: "Invoice Issue - June", st: "reproduced", daysAgo: 1 },
+    { s: "form", r: "The API returns 500 errors when I try to create a new user with the /v1/users endpoint. This started happening after yesterday's deployment.", sid: "dev-456", sn: "Mike Ross", se: "mike@partner.com", ch: "API Bug Report", st: "reproduced", daysAgo: 1 },
+    { s: "slack", r: "The notification bell icon is not showing the red badge even though I have unread messages. Refreshing the page doesn't help.", sid: "U67890", sn: "Emily Davis", se: "emily@company.com", ch: "#frontend", st: "triaged", daysAgo: 2 },
+    { s: "email", r: "Database query timeout on the analytics dashboard. Loading the monthly report takes over 30 seconds and eventually fails. Our team uses this daily.", sid: "ops@company.com", sn: "Ops Team", se: "ops@company.com", ch: "Analytics Dashboard Timeout", st: "reproduced", daysAgo: 3 },
+    { s: "slack", r: "Can you add dark mode to the dashboard? The current light theme is hard on the eyes during night shifts.", sid: "U11111", sn: "Night Shift Crew", se: "night@company.com", ch: "#feature-requests", st: "parsed", daysAgo: 3 },
+    { s: "form", r: "The password reset email is not being sent. I've tried 3 times and checked my spam folder. This is blocking 5 users from accessing their accounts.", sid: "support-789", sn: "Support Team", se: "support@company.com", ch: "Password Reset Failure", st: "reproduced", daysAgo: 4 },
+    { s: "slack", r: "The export to CSV button on the users table doesn't do anything when clicked. Chrome latest version.", sid: "U22222", sn: "Jane Smith", se: "jane@company.com", ch: "#ui-issues", st: "triaged", daysAgo: 5 },
+    { s: "email", r: "Webhook deliveries are failing with SSL certificate errors since this morning. Our integration partners can't receive events.", sid: "integration@partner.com", sn: "Partner Integration", se: "integration@partner.com", ch: "Webhook SSL Errors", st: "reproduced", daysAgo: 5 },
+    { s: "slack", r: "How do I set up two-factor authentication for my team? The docs mention it but I can't find the setting.", sid: "U33333", sn: "Team Lead", se: "lead@customer.com", ch: "#general", st: "parsed", daysAgo: 6 },
   ];
 
   for (const m of msgs) {
-    const ts = new Date(Date.now() - m.hrs * 60 * 60 * 1000);
+    const ts = new Date(Date.now() - m.daysAgo * 24 * 60 * 60 * 1000);
+    ts.setHours(10, 0, 0, 0); // noon-ish so it's clearly within the day window
     await sql`INSERT INTO messages (source, raw_content, sender_id, sender_name, sender_email, channel, status, timestamp) VALUES (${m.s}, ${m.r}, ${m.sid}, ${m.sn}, ${m.se}, ${m.ch}, ${m.st}, ${ts})`;
   }
   console.log(`  Seeded ${msgs.length} messages`);
+
 
   // Parsed Results
   const parsedData = [
@@ -88,22 +90,25 @@ async function seed() {
   }
   console.log(`  Seeded ${parsedData.length} parsed results`);
 
-  // Bug Reports
+  // Bug Reports — spread across last 7 days matching their source messages
   const bugData = [
-    { mid: 1, prid: 1, t: "Login timeout — auth", d: "wtf the login button is broken again, i click it and nothing happens", s: "slack", c: "auth", sev: "P1", ps: 72, st: "open", ah: "@alice" },
-    { mid: 2, prid: 2, t: "Invoice page blank — billing", d: "Can't see my invoice for June. The billing page shows a blank screen after I log in.", s: "email", c: "billing", sev: "P1", ps: 68, st: "in_progress", ah: "@bob" },
-    { mid: 3, prid: 3, t: "User creation API 500 error — api", d: "The API returns 500 errors when I try to create a new user with the /v1/users endpoint.", s: "form", c: "api", sev: "P0", ps: 82, st: "open", ah: "@diana" },
-    { mid: 4, prid: 4, t: "Notification badge not updating — notifications", d: "The notification bell icon is not showing the red badge even though I have unread messages.", s: "slack", c: "notifications", sev: "P2", ps: 42, st: "open", ah: "@charlie" },
-    { mid: 5, prid: 5, t: "Analytics query timeout — database", d: "Database query timeout on the analytics dashboard. Loading the monthly report takes over 30 seconds.", s: "email", c: "database", sev: "P1", ps: 65, st: "open", ah: "@diana" },
-    { mid: 7, prid: 7, t: "Password reset email not sending — auth", d: "The password reset email is not being sent. I've tried 3 times and checked my spam folder.", s: "form", c: "auth", sev: "P0", ps: 78, st: "in_progress", ah: "@alice" },
-    { mid: 8, prid: 8, t: "CSV export button unresponsive — ui", d: "The export to CSV button on the users table doesn't do anything when clicked.", s: "slack", c: "ui", sev: "P2", ps: 45, st: "open", ah: "@charlie" },
-    { mid: 9, prid: 9, t: "Webhook SSL certificate error — api", d: "Webhook deliveries are failing with SSL certificate errors since this morning.", s: "email", c: "api", sev: "P0", ps: 88, st: "open", ah: "@diana" },
+    { mid: 1, prid: 1, t: "Login timeout — auth", d: "wtf the login button is broken again, i click it and nothing happens", s: "slack", c: "auth", sev: "P1", ps: 72, st: "open", ah: "@alice", daysAgo: 0 },
+    { mid: 2, prid: 2, t: "Invoice page blank — billing", d: "Can't see my invoice for June. The billing page shows a blank screen after I log in.", s: "email", c: "billing", sev: "P1", ps: 68, st: "in_progress", ah: "@bob", daysAgo: 1 },
+    { mid: 3, prid: 3, t: "User creation API 500 error — api", d: "The API returns 500 errors when I try to create a new user with the /v1/users endpoint.", s: "form", c: "api", sev: "P0", ps: 82, st: "open", ah: "@diana", daysAgo: 1 },
+    { mid: 4, prid: 4, t: "Notification badge not updating — notifications", d: "The notification bell icon is not showing the red badge even though I have unread messages.", s: "slack", c: "notifications", sev: "P2", ps: 42, st: "open", ah: "@charlie", daysAgo: 2 },
+    { mid: 5, prid: 5, t: "Analytics query timeout — database", d: "Database query timeout on the analytics dashboard. Loading the monthly report takes over 30 seconds.", s: "email", c: "database", sev: "P1", ps: 65, st: "open", ah: "@diana", daysAgo: 3 },
+    { mid: 7, prid: 7, t: "Password reset email not sending — auth", d: "The password reset email is not being sent. I've tried 3 times and checked my spam folder.", s: "form", c: "auth", sev: "P0", ps: 78, st: "in_progress", ah: "@alice", daysAgo: 4 },
+    { mid: 8, prid: 8, t: "CSV export button unresponsive — ui", d: "The export to CSV button on the users table doesn't do anything when clicked.", s: "slack", c: "ui", sev: "P2", ps: 45, st: "open", ah: "@charlie", daysAgo: 5 },
+    { mid: 9, prid: 9, t: "Webhook SSL certificate error — api", d: "Webhook deliveries are failing with SSL certificate errors since this morning.", s: "email", c: "api", sev: "P0", ps: 88, st: "open", ah: "@diana", daysAgo: 5 },
   ];
 
   for (const b of bugData) {
-    await sql`INSERT INTO bug_reports (message_id, parsed_result_id, title, description, source, component, severity, priority_score, status, assignee_handle) VALUES (${b.mid}, ${b.prid}, ${b.t}, ${b.d}, ${b.s}, ${b.c}, ${b.sev}, ${b.ps}, ${b.st}, ${b.ah})`;
+    const ts = new Date(Date.now() - b.daysAgo * 24 * 60 * 60 * 1000);
+    ts.setHours(11, 0, 0, 0);
+    await sql`INSERT INTO bug_reports (message_id, parsed_result_id, title, description, source, component, severity, priority_score, status, assignee_handle, created_at) VALUES (${b.mid}, ${b.prid}, ${b.t}, ${b.d}, ${b.s}, ${b.c}, ${b.sev}, ${b.ps}, ${b.st}, ${b.ah}, ${ts})`;
   }
   console.log(`  Seeded ${bugData.length} bug reports`);
+
 
   // Reproduction Steps
   const reproData = [

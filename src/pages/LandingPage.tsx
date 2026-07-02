@@ -166,12 +166,17 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <Link
-              to="/dashboard"
-              className="text-sm font-bold text-[#0f172a] bg-white hover:bg-gray-100 px-6 py-2.5 rounded-full transition-all flex-shrink-0 whitespace-nowrap z-10"
-            >
-              Start Today
-            </Link>
+            <div className="flex items-center gap-2 sm:gap-4 z-10 flex-shrink-0">
+              <Link to="/login" className="text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/10 px-4 sm:px-5 py-2.5 rounded-full transition-colors whitespace-nowrap">
+                Log In
+              </Link>
+              <Link
+                to="/dashboard"
+                className="text-sm font-bold text-[#0f172a] bg-white hover:bg-gray-100 px-5 sm:px-6 py-2.5 rounded-full transition-all whitespace-nowrap hidden sm:block"
+              >
+                Start Today
+              </Link>
+            </div>
           </div>
         </motion.nav>
       </div>

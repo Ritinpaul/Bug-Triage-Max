@@ -1,8 +1,7 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { messages, parsedResults, bugReports } from "../../db/schema";
-import { eq, desc, and, sql, gte } from "drizzle-orm";
+import { getPg } from "../queries/connection";
 import { processMessage } from "../services/agent-service";
 
 export const messageRouter = createRouter({
@@ -18,57 +17,67 @@ export const messageRouter = createRouter({
       }).optional()
     )
     .query(async ({ input }) => {
-      const db = getDb();
+      const pg = getPg();
       const opts = input || { source: "all", limit: 50, offset: 0 };
-      const conditions = [];
+
+      const conditions: string[] = [];
+      const params: unknown[] = [];
+      let p = 1;
 
       if (opts.source && opts.source !== "all") {
-        conditions.push(eq(messages.source, opts.source));
+        conditions.push(`source = $${p++}`);
+        params.push(opts.source);
       }
       if (opts.status) {
-        conditions.push(eq(messages.status, opts.status as "pending" | "parsed" | "triaged" | "reproduced" | "resolved"));
+        conditions.push(`status = $${p++}`);
+        params.push(opts.status);
       }
       if (opts.search) {
-        conditions.push(sql`${messages.rawContent} LIKE ${`%${opts.search}%`}`);
+        conditions.push(`raw_content ILIKE $${p++}`);
+        params.push(`%${opts.search}%`);
       }
 
-      const where = conditions.length > 0 ? and(...conditions) : undefined;
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      const limit = opts.limit ?? 50;
+      const offset = opts.offset ?? 0;
 
-      const items = await db.query.messages.findMany({
-        where,
-        orderBy: [desc(messages.createdAt)],
-        limit: opts.limit,
-        offset: opts.offset,
-      });
+      const items = await pg.unsafe(`
+        SELECT * FROM messages ${where}
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `, params as any[]);
 
-      const countResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(messages)
-        .where(where);
-      const total = countResult[0]?.count || 0;
+      const countRows = await pg.unsafe(`SELECT count(*) as total FROM messages ${where}`, params as any[]);
+      const total = Number(countRows[0]?.total || 0);
 
-      return { items, total };
+      return {
+        items: items.map((m: any) => ({
+          id: m.id, source: m.source, rawContent: m.raw_content,
+          senderId: m.sender_id, senderName: m.sender_name, senderEmail: m.sender_email,
+          channel: m.channel, status: m.status, contentHash: m.content_hash,
+          attachments: m.attachments, createdAt: m.created_at, timestamp: m.timestamp,
+        })),
+        total,
+      };
     }),
 
   // Get single message with related data
   getById: publicQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const message = await db.query.messages.findFirst({
-        where: eq(messages.id, input.id),
-      });
-      if (!message) return null;
+      const pg = getPg();
+      const msgs = await pg`SELECT * FROM messages WHERE id = ${input.id} LIMIT 1`;
+      if (!msgs[0]) return null;
+      const m = msgs[0];
 
-      const parsed = await db.query.parsedResults.findFirst({
-        where: eq(parsedResults.messageId, input.id),
-      });
+      const parsed = await pg`SELECT * FROM parsed_results WHERE message_id = ${input.id} LIMIT 1`;
+      const bug = await pg`SELECT * FROM bug_reports WHERE message_id = ${input.id} LIMIT 1`;
 
-      const bug = await db.query.bugReports.findFirst({
-        where: eq(bugReports.messageId, input.id),
-      });
-
-      return { message, parsed, bug };
+      return {
+        message: { id: m.id, source: m.source, rawContent: m.raw_content, senderId: m.sender_id, senderName: m.sender_name, senderEmail: m.sender_email, channel: m.channel, status: m.status, createdAt: m.created_at },
+        parsed: parsed[0] || null,
+        bug: bug[0] ? { id: bug[0].id, title: bug[0].title, severity: bug[0].severity, status: bug[0].status, assigneeHandle: bug[0].assignee_handle, component: bug[0].component, priorityScore: Number(bug[0].priority_score) } : null,
+      };
     }),
 
   // Create new message (simulates webhook ingestion)
@@ -85,63 +94,59 @@ export const messageRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const db = getDb();
+      const pg = getPg();
       const contentHash = await hashContent(input.senderId + input.rawContent);
 
       // Check for duplicates within 5 min window
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-      const existing = await db.query.messages.findFirst({
-        where: and(
-          eq(messages.contentHash, contentHash),
-          gte(messages.createdAt, fiveMinAgo)
-        ),
-      });
+      const existing = await pg`
+        SELECT id FROM messages WHERE content_hash = ${contentHash} AND created_at >= ${fiveMinAgo.toISOString()} LIMIT 1
+      `;
 
-      if (existing) {
-        return { id: existing.id, duplicate: true };
+      if (existing[0]) {
+        return { id: existing[0].id, duplicate: true };
       }
 
-      const [result] = await db.insert(messages).values({
-        source: input.source,
-        rawContent: input.rawContent,
-        senderId: input.senderId,
-        senderName: input.senderName,
-        senderEmail: input.senderEmail,
-        channel: input.channel,
-        contentHash,
-        attachments: input.attachments,
-      }).returning({ id: messages.id });
+      const result = await pg`
+        INSERT INTO messages (source, raw_content, sender_id, sender_name, sender_email, channel, content_hash)
+        VALUES (${input.source}, ${input.rawContent}, ${input.senderId}, ${input.senderName ?? null}, ${input.senderEmail ?? null}, ${input.channel ?? null}, ${contentHash})
+        RETURNING id
+      `;
+
+      const id = result[0].id;
 
       // Auto-trigger pipeline in background
       setTimeout(() => {
-        processMessage(result.id).catch(console.error);
+        processMessage(id).catch(console.error);
       }, 100);
 
-      return { id: result.id, duplicate: false };
+      return { id, duplicate: false };
     }),
 
   // Stats for dashboard
   stats: publicQuery.query(async () => {
-    const db = getDb();
-    const result = await db
-      .select({
-        total: sql<number>`count(*)`,
-        pending: sql<number>`sum(case when ${messages.status} = 'pending' then 1 else 0 end)`,
-        parsed: sql<number>`sum(case when ${messages.status} = 'parsed' then 1 else 0 end)`,
-        triaged: sql<number>`sum(case when ${messages.status} = 'triaged' then 1 else 0 end)`,
-        resolved: sql<number>`sum(case when ${messages.status} = 'resolved' then 1 else 0 end)`,
-      })
-      .from(messages);
-
-    const bySource = await db
-      .select({
-        source: messages.source,
-        count: sql<number>`count(*)`,
-      })
-      .from(messages)
-      .groupBy(messages.source);
-
-    return { ...result[0], bySource };
+    const pg = getPg();
+    const result = await pg`
+      SELECT
+        count(*) as total,
+        sum(case when status = 'pending' then 1 else 0 end) as pending,
+        sum(case when status = 'parsed' then 1 else 0 end) as parsed,
+        sum(case when status = 'triaged' then 1 else 0 end) as triaged,
+        sum(case when status = 'resolved' then 1 else 0 end) as resolved
+      FROM messages
+    `;
+    const bySource = await pg`
+      SELECT source, count(*) as count FROM messages GROUP BY source
+    `;
+    const r = result[0] || {};
+    return {
+      total: Number(r.total || 0),
+      pending: Number(r.pending || 0),
+      parsed: Number(r.parsed || 0),
+      triaged: Number(r.triaged || 0),
+      resolved: Number(r.resolved || 0),
+      bySource: bySource.map((s: any) => ({ source: s.source, count: Number(s.count) })),
+    };
   }),
 
   // Recent messages stream (for real-time dashboard)
@@ -151,31 +156,30 @@ export const messageRouter = createRouter({
       source: z.enum(["slack", "email", "form", "all"]).optional().default("all"),
     }).optional())
     .query(async ({ input }) => {
-      const db = getDb();
+      const pg = getPg();
       const limit = input?.limit || 20;
       const source = input?.source ?? "all";
 
-      const conditions = source !== "all"
-        ? [eq(messages.source, source)]
-        : [];
-      const where = conditions.length > 0 ? conditions[0] : undefined;
+      const items = source !== "all"
+        ? await pg`SELECT * FROM messages WHERE source = ${source} ORDER BY created_at DESC LIMIT ${limit}`
+        : await pg`SELECT * FROM messages ORDER BY created_at DESC LIMIT ${limit}`;
 
-      const items = await db.query.messages.findMany({
-        where,
-        orderBy: [desc(messages.createdAt)],
-        limit,
-      });
-
-      // Enrich with parsed data
+      // Enrich with parsed data and bug
       const enriched = await Promise.all(
-        items.map(async (msg) => {
-          const parsed = await db.query.parsedResults.findFirst({
-            where: eq(parsedResults.messageId, msg.id),
-          });
-          const bug = await db.query.bugReports.findFirst({
-            where: eq(bugReports.messageId, msg.id),
-          });
-          return { ...msg, parsed, bug };
+        items.map(async (m: any) => {
+          const parsed = await pg`SELECT * FROM parsed_results WHERE message_id = ${m.id} LIMIT 1`;
+          const bug = await pg`SELECT * FROM bug_reports WHERE message_id = ${m.id} LIMIT 1`;
+          return {
+            id: m.id, source: m.source, rawContent: m.raw_content,
+            senderId: m.sender_id, senderName: m.sender_name, senderEmail: m.sender_email,
+            channel: m.channel, status: m.status, createdAt: m.created_at,
+            parsed: parsed[0] ? { ...parsed[0], overallConfidence: Number(parsed[0].overall_confidence) } : null,
+            bug: bug[0] ? {
+              id: bug[0].id, title: bug[0].title, severity: bug[0].severity,
+              status: bug[0].status, assigneeHandle: bug[0].assignee_handle,
+              component: bug[0].component, priorityScore: Number(bug[0].priority_score),
+            } : null,
+          };
         })
       );
 
@@ -184,9 +188,6 @@ export const messageRouter = createRouter({
 });
 
 async function hashContent(content: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(content);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return createHash("sha256").update(content).digest("hex");
 }
+

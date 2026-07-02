@@ -6,16 +6,27 @@ import * as relations from "@db/relations";
 
 const fullSchema = { ...schema, ...relations };
 
-let instance: ReturnType<typeof drizzle<typeof fullSchema>>;
+// Use globalThis to store the connection to prevent leaks during HMR
+const globalForDb = globalThis as unknown as {
+  _pgClient?: ReturnType<typeof postgres>;
+};
+
+const client = globalForDb._pgClient ?? postgres(env.databaseUrl, {
+  // Supabase requires SSL in all environments (dev and production)
+  ssl: "require",
+  max: 10, // connection pool
+});
+
+if (process.env.NODE_ENV !== "production") {
+  globalForDb._pgClient = client;
+}
+
+const db = drizzle(client, { schema: fullSchema });
 
 export function getDb() {
-  if (!instance) {
-    const client = postgres(env.databaseUrl, {
-      // Supabase requires SSL in production
-      ssl: env.isProduction ? "require" : false,
-      max: 10, // connection pool
-    });
-    instance = drizzle(client, { schema: fullSchema });
-  }
-  return instance;
+  return db;
+}
+
+export function getPg() {
+  return client;
 }

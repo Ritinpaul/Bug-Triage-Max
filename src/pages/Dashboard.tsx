@@ -16,12 +16,14 @@ import {
   TrendingUp,
   Users,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { GlassCard } from "@/components/GlassCard";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { SourceBadge } from "@/components/SourceBadge";
 import { ConfidenceRing } from "@/components/ConfidenceRing";
 import { AgentActivityFeed } from "@/components/AgentActivityFeed";
+import { SimulateBugModal } from "@/components/SimulateBugModal";
 import { useState } from "react";
 
 const container = {
@@ -39,6 +41,7 @@ const item = {
 
 export default function Dashboard() {
   const [sourceFilter, setSourceFilter] = useState<"all" | "slack" | "email" | "form">("all");
+  const [simulateOpen, setSimulateOpen] = useState(false);
 
   const { data: bugStats } = trpc.bugs.stats.useQuery();
   const { data: messageStats } = trpc.messages.stats.useQuery();
@@ -51,7 +54,8 @@ export default function Dashboard() {
   const avgPriority = Math.round(bugStats?.avgPriority || 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -67,6 +71,13 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSimulateOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-md shadow-sky-500/20 hover:shadow-sky-500/30 transition-all group"
+          >
+            <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
+            Simulate Bug
+          </button>
           <span className="flex items-center gap-2 text-xs text-sky-600 bg-sky-500/10 px-3 py-1.5 rounded-full font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
             Live
@@ -193,7 +204,7 @@ export default function Dashboard() {
                     </span>
                     <span className="flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
-                      {msg.bug?.component || msg.parsed?.component || "-"}
+                      {msg.bug?.component || (msg.parsed as any)?.component || "-"}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -319,7 +330,11 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+
+      {/* Simulate Bug Modal */}
+      <SimulateBugModal open={simulateOpen} onClose={() => setSimulateOpen(false)} />
+    </>
   );
 }
 

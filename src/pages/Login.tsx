@@ -1,23 +1,24 @@
+import { useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-
-function getOAuthUrl() {
-  const kimiAuthUrl = import.meta.env.VITE_KIMI_AUTH_URL;
-  const appID = import.meta.env.VITE_APP_ID;
-  const redirectUri = `${window.location.origin}/api/oauth/callback`;
-  const state = btoa(redirectUri);
-
-  const url = new URL(`${kimiAuthUrl}/api/oauth/authorize`);
-  url.searchParams.set("client_id", appID);
-  url.searchParams.set("redirect_uri", redirectUri);
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", "profile");
-  url.searchParams.set("state", state);
-
-  return url.toString();
-}
+import { trpc } from "@/providers/trpc";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
+  const guestLogin = trpc.auth.guestLogin.useMutation();
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
+
+  const handleGuestLogin = async () => {
+    setIsGuestLoading(true);
+    try {
+      await guestLogin.mutateAsync();
+      window.location.href = "/dashboard";
+    } catch (e) {
+      console.error(e);
+      setIsGuestLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50/50">
       <motion.div
@@ -30,14 +31,19 @@ export default function Login() {
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">Welcome to Bug Triage</h1>
             <p className="text-xs text-slate-450 font-semibold">Sign in to manage your agent triage system</p>
           </div>
-          <button
-            onClick={() => {
-              window.location.href = getOAuthUrl();
-            }}
-            className="w-full py-2.5 px-4 text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-teal-500 hover:opacity-95 rounded-xl transition-all shadow-sm"
-          >
-            Sign in with Kimi
-          </button>
+          
+          <div className="space-y-3">
+            <button
+              onClick={handleGuestLogin}
+              disabled={isGuestLoading}
+              className="w-full flex items-center justify-center py-2.5 px-4 text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shadow-sm disabled:opacity-50"
+            >
+              {isGuestLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin text-slate-400" />
+              ) : null}
+              {isGuestLoading ? "Logging in..." : "Continue as Guest"}
+            </button>
+          </div>
         </GlassCard>
       </motion.div>
     </div>

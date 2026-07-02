@@ -1,71 +1,68 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { bugReports, messages, agentActivities } from "../../db/schema";
 import { gte, sql } from "drizzle-orm";
+import { getDb, getPg } from "../queries/connection";
+import { agentActivities, messages, bugReports } from "../../db/schema";
 
 export const analyticsRouter = createRouter({
   // Dashboard overview stats
   overview: publicQuery.query(async () => {
-    const db = getDb();
+    const pg = getPg();
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Message stats
-    const messageStats = await db
-      .select({
-        total24h: sql<number>`count(*)`,
-        bySource: messages.source,
-      })
-      .from(messages)
-      .where(gte(messages.createdAt, last24h))
-      .groupBy(messages.source);
+    const messageStats = await pg`
+      SELECT count(*) as total24h, source as "bySource"
+      FROM messages
+      WHERE created_at >= ${last24h.toISOString()}
+      GROUP BY source
+    `;
 
     // Bug stats
-    const bugStats = await db
-      .select({
-        total: sql<number>`count(*)`,
-        open: sql<number>`sum(case when ${bugReports.status} = 'open' then 1 else 0 end)`,
-        inProgress: sql<number>`sum(case when ${bugReports.status} = 'in_progress' then 1 else 0 end)`,
-        resolved7d: sql<number>`sum(case when ${bugReports.status} in ('resolved', 'closed') and ${bugReports.updatedAt} >= ${last7d} then 1 else 0 end)`,
-        avgResolution: sql<number>`avg(case when ${bugReports.resolutionTime} is not null then ${bugReports.resolutionTime} end)`,
-      })
-      .from(bugReports);
+    const bugStatsRows = await pg`
+      SELECT
+        count(*) as total,
+        sum(case when status = 'open' then 1 else 0 end) as open,
+        sum(case when status = 'in_progress' then 1 else 0 end) as "inProgress",
+        sum(case when status in ('resolved', 'closed') and updated_at >= ${last7d.toISOString()} then 1 else 0 end) as "resolved7d",
+        avg(case when resolution_time is not null then resolution_time end) as "avgResolution"
+      FROM bug_reports
+    `;
+    const bugStats = bugStatsRows[0] || { total: 0, open: 0, inProgress: 0, resolved7d: 0, avgResolution: null };
 
     // Component breakdown
-    const byComponent = await db
-      .select({
-        component: bugReports.component,
-        count: sql<number>`count(*)`,
-        open: sql<number>`sum(case when ${bugReports.status} in ('open', 'in_progress') then 1 else 0 end)`,
-      })
-      .from(bugReports)
-      .groupBy(bugReports.component)
-      .orderBy(sql`count(*) desc`);
+    const byComponent = await pg`
+      SELECT
+        component,
+        count(*) as count,
+        sum(case when status in ('open', 'in_progress') then 1 else 0 end) as open
+      FROM bug_reports
+      GROUP BY component
+      ORDER BY count(*) desc
+    `;
 
     // Severity distribution
-    const bySeverity = await db
-      .select({
-        severity: bugReports.severity,
-        count: sql<number>`count(*)`,
-      })
-      .from(bugReports)
-      .groupBy(bugReports.severity)
-      .orderBy(bugReports.severity);
+    const bySeverity = await pg`
+      SELECT severity, count(*) as count
+      FROM bug_reports
+      GROUP BY severity
+      ORDER BY severity
+    `;
 
     // Agent activity (24h)
-    const agentStats = await db
-      .select({
-        agentName: agentActivities.agentName,
-        runs: sql<number>`count(*)`,
-        avgDuration: sql<number>`avg(${agentActivities.duration})`,
-        successRate: sql<number>`sum(case when ${agentActivities.status} = 'completed' then 1 else 0 end) * 100.0 / count(*)`,
-      })
-      .from(agentActivities)
-      .where(gte(agentActivities.createdAt, last24h))
-      .groupBy(agentActivities.agentName);
+    const agentStats = await pg`
+      SELECT
+        agent_name as "agentName",
+        count(*) as runs,
+        avg(duration) as "avgDuration",
+        sum(case when status = 'completed' then 1 else 0 end) * 100.0 / count(*) as "successRate"
+      FROM agent_activities
+      WHERE created_at >= ${last24h.toISOString()}
+      GROUP BY agent_name
+    `;
 
-    // Trend data (last 7 days)
+    // Trend data (last 7 days) using messages.timestamp
     const dailyTrend = [];
     for (let i = 6; i >= 0; i--) {
       const dayStart = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
@@ -73,38 +70,43 @@ export const analyticsRouter = createRouter({
       const dayEnd = new Date(dayStart);
       dayEnd.setHours(23, 59, 59, 999);
 
-      const dayMessages = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(messages)
-        .where(
-          sql`${messages.createdAt} >= ${dayStart} and ${messages.createdAt} <= ${dayEnd}`
-        );
+      const dayMessages = await pg`
+        SELECT count(*) as count FROM messages
+        WHERE timestamp >= ${dayStart.toISOString()} AND timestamp <= ${dayEnd.toISOString()}
+      `;
 
-      const dayBugs = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(bugReports)
-        .where(
-          sql`${bugReports.createdAt} >= ${dayStart} and ${bugReports.createdAt} <= ${dayEnd}`
-        );
+      const dayBugs = await pg`
+        SELECT count(*) as count FROM bug_reports
+        WHERE created_at >= ${dayStart.toISOString()} AND created_at <= ${dayEnd.toISOString()}
+      `;
 
       dailyTrend.push({
         date: dayStart.toISOString().split("T")[0],
-        messages: dayMessages[0]?.count || 0,
-        bugs: dayBugs[0]?.count || 0,
+        messages: Number(dayMessages[0]?.count || 0),
+        bugs: Number(dayBugs[0]?.count || 0),
       });
     }
 
     return {
       messages: {
-        total24h: messageStats.reduce((s, m) => s + m.total24h, 0),
-        bySource: messageStats,
+        total24h: messageStats.reduce((s: number, m: any) => s + Number(m.total24h), 0),
+        bySource: messageStats.map((m: any) => ({ total24h: Number(m.total24h), bySource: m.bySource })),
       },
       bugs: {
-        ...bugStats[0],
-        byComponent,
-        bySeverity,
+        total: Number(bugStats.total),
+        open: Number(bugStats.open),
+        inProgress: Number(bugStats.inProgress),
+        resolved7d: Number(bugStats.resolved7d),
+        avgResolution: bugStats.avgResolution ? Number(bugStats.avgResolution) : null,
+        byComponent: byComponent.map((r: any) => ({ component: r.component, count: Number(r.count), open: Number(r.open) })),
+        bySeverity: bySeverity.map((r: any) => ({ severity: r.severity, count: Number(r.count) })),
       },
-      agents: agentStats,
+      agents: agentStats.map((r: any) => ({
+        agentName: r.agentName,
+        runs: Number(r.runs),
+        avgDuration: r.avgDuration ? Number(r.avgDuration) : 0,
+        successRate: r.successRate ? Number(r.successRate) : 0,
+      })),
       dailyTrend,
     };
   }),

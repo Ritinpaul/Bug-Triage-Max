@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { DemoBanner } from "@/components/DemoBanner";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import {
   LayoutDashboard,
@@ -186,6 +187,9 @@ export function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden flex flex-col min-w-0">
+        {/* Demo Banner */}
+        <DemoBanner />
+
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-[#0f172a]/08 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-2">

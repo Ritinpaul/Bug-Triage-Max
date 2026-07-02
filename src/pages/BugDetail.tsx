@@ -396,7 +396,7 @@ export default function BugDetail() {
                   </div>
                 )}
 
-                {reproduction.accuracyScore && (
+                {(reproduction as any).accuracyScore && (
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-[11px] text-slate-400 font-medium">
                       AI Accuracy Score
@@ -405,11 +405,11 @@ export default function BugDetail() {
                       <div className="h-1.5 w-20 bg-[#0f172a]/08 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-sky-500 to-teal-500"
-                          style={{ width: `${Math.round(reproduction.accuracyScore * 100)}%` }}
+                          style={{ width: `${Math.round((reproduction as any).accuracyScore * 100)}%` }}
                         />
                       </div>
                       <span className="text-[11px] font-mono text-slate-400 font-medium">
-                        {Math.round(reproduction.accuracyScore * 100)}%
+                        {Math.round((reproduction as any).accuracyScore * 100)}%
                       </span>
                     </div>
                   </div>

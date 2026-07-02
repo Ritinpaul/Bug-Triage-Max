@@ -468,7 +468,7 @@ export async function runReproductionAgent(bugId: number) {
 async function findAssignee(component: string): Promise<string> {
   const db = getDb();
   const experts = await db.query.teamMembers.findMany({
-    where: sql`JSON_CONTAINS(${teamMembers.expertise}, ${JSON.stringify([component])})`,
+    where: sql`${teamMembers.expertise}::jsonb @> ${JSON.stringify([component])}::jsonb`,
   });
   if (experts.length > 0) return experts[0].handle;
 
