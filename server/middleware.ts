@@ -44,6 +44,7 @@ export const rateLimitMiddleware = (limit: number, windowMs: number) => t.middle
 
 export const createRouter = t.router;
 export const publicQuery = t.procedure;
+export const createCallerFactory = t.createCallerFactory;
 
 const requireAuth = t.middleware(async (opts) => {
   const { ctx, next } = opts;

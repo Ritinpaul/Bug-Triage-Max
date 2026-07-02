@@ -5,6 +5,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
 
+/// <reference types="vitest" />
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -25,5 +27,10 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
+  },
+  test: {
+    include: ["src/test/**/*.test.ts"],
+    setupFiles: ["src/test/setup.ts"],
+    environment: "node",
   },
 });
