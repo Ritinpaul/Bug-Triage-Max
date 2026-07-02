@@ -16,16 +16,22 @@ export const agentRouter = createRouter({
             .optional()
             .default("all"),
           limit: z.number().min(1).max(100).optional().default(20),
+          bugId: z.number().optional(),
         })
         .optional()
     )
     .query(async ({ input }) => {
       const db = getDb();
       const opts = input || { agent: "all", limit: 20 };
-      const where =
+      let where =
         opts.agent && opts.agent !== "all"
           ? eq(agentActivities.agentName, opts.agent)
           : undefined;
+      
+      if (opts.bugId) {
+        const bugWhere = sql`${agentActivities.targetId} = ${opts.bugId} AND ${agentActivities.targetType} = 'bug'`;
+        where = where ? sql`${where} AND ${bugWhere}` : bugWhere;
+      }
 
       const items = await db.query.agentActivities.findMany({
         where,
