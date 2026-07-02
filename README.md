@@ -100,8 +100,8 @@ Slack / Email / Form / Sentry / GitHub Webhook
 
 | Package | Description |
 |---------|-------------|
-| [`bugpulse-cli`](packages/bugpulse-cli) | Terminal CLI — list, filter, assign, and report bugs from your shell |
-| [`bugpulse-mcp`](packages/bugpulse-mcp) | MCP server — connect BugPulse to Claude, Cursor, and any MCP-compatible AI assistant |
+| [`bugpulse-cli`](https://github.com/Nuuvixx/BugPulse-CLI/blob/main/README.md) | Terminal CLI — list, filter, assign, and report bugs from your shell |
+| [`bugpulse-mcp`](https://github.com/Nuuvixx/BugPulse-mcp/blob/main/README.md) | MCP server — connect BugPulse to Claude, Cursor, and any MCP-compatible AI assistant |
 
 ---
 
@@ -284,7 +284,7 @@ bugpulse open
 bugpulse watch --interval 5
 ```
 
-Full documentation: [packages/bugpulse-cli](packages/bugpulse-cli/README.md)
+Full documentation: [packages/bugpulse-cli](https://github.com/Nuuvixx/BugPulse-CLI/blob/main/README.md)
 
 ### BugPulse MCP
 
@@ -302,7 +302,7 @@ Connect BugPulse to Claude Desktop or Cursor:
 }
 ```
 
-Full documentation: [packages/bugpulse-mcp](packages/bugpulse-mcp/README.md)
+Full documentation: [packages/bugpulse-mcp](https://github.com/Nuuvixx/BugPulse-mcp/blob/main/README.md)
 
 ---
 
