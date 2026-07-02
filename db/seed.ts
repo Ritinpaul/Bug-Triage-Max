@@ -27,6 +27,7 @@ async function seed() {
   await db.delete(reproductionSteps);
   await db.delete(bugReports);
   await db.delete(parsedResults);
+  await db.delete(integrationStatus);
   await db.delete(agentActivities);
   await db.delete(messages);
   await db.delete(teamMembers);

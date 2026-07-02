@@ -74,54 +74,69 @@ export const bugRouter = createRouter({
       const countRows = await pg.unsafe(`SELECT count(*) as total FROM bug_reports ${where}`, params as any[]);
       const total = Number(countRows[0]?.total || 0);
 
+      const bugIds = items.map((b: any) => b.id);
+      let reprosByBugId: Record<number, any> = {};
+      let similarByBugId: Record<number, any[]> = {};
+
+      if (bugIds.length > 0) {
+        const repros = await pg`SELECT * FROM reproduction_steps WHERE bug_report_id IN ${pg(bugIds)}`;
+        repros.forEach((r: any) => {
+          reprosByBugId[r.bug_report_id] = r;
+        });
+
+        const similars = await pg`
+          SELECT * FROM similar_bug_matches WHERE bug_report_id IN ${pg(bugIds)}
+          ORDER BY similarity_score DESC
+        `;
+        similars.forEach((s: any) => {
+          if (!similarByBugId[s.bug_report_id]) similarByBugId[s.bug_report_id] = [];
+          if (similarByBugId[s.bug_report_id].length < 3) {
+            similarByBugId[s.bug_report_id].push(s);
+          }
+        });
+      }
+
       // Enrich with repro and similar bugs
-      const enriched = await Promise.all(
-        items.map(async (bug: any) => {
-          const repro = await pg`
-            SELECT * FROM reproduction_steps WHERE bug_report_id = ${bug.id} LIMIT 1
-          `;
-          const similar = await pg`
-            SELECT * FROM similar_bug_matches WHERE bug_report_id = ${bug.id}
-            ORDER BY similarity_score DESC LIMIT 3
-          `;
-          return {
-            id: bug.id,
-            messageId: bug.message_id,
-            parsedResultId: bug.parsed_result_id,
-            title: bug.title,
-            description: bug.description,
-            source: bug.source,
-            component: bug.component,
-            severity: bug.severity,
-            priorityScore: Number(bug.priority_score),
-            status: bug.status,
-            assigneeId: bug.assignee_id,
-            assigneeHandle: bug.assignee_handle,
-            githubIssueId: bug.github_issue_id,
-            githubIssueUrl: bug.github_issue_url,
-            duplicateOfId: bug.duplicate_of_id,
-            resolutionTime: bug.resolution_time,
-            createdAt: bug.created_at,
-            updatedAt: bug.updated_at,
-            resolvedAt: bug.resolved_at,
-            reproduction: repro[0] ? {
-              id: repro[0].id,
-              bugReportId: repro[0].bug_report_id,
-              steps: repro[0].steps,
-              expectedBehavior: repro[0].expected_behavior,
-              actualBehavior: repro[0].actual_behavior,
-              errorLogSummary: repro[0].error_log_summary,
-            } : null,
-            similarBugs: similar.map((s: any) => ({
-              id: s.id,
-              bugReportId: s.bug_report_id,
-              similarBugId: s.similar_bug_id,
-              similarityScore: Number(s.similarity_score),
-              reason: s.reason,
-            })),
-          };
-        })
-      );
+      const enriched = items.map((bug: any) => {
+        const repro = reprosByBugId[bug.id];
+        const similar = similarByBugId[bug.id] || [];
+        return {
+          id: bug.id,
+          messageId: bug.message_id,
+          parsedResultId: bug.parsed_result_id,
+          title: bug.title,
+          description: bug.description,
+          source: bug.source,
+          component: bug.component,
+          severity: bug.severity,
+          priorityScore: Number(bug.priority_score),
+          status: bug.status,
+          assigneeId: bug.assignee_id,
+          assigneeHandle: bug.assignee_handle,
+          githubIssueId: bug.github_issue_id,
+          githubIssueUrl: bug.github_issue_url,
+          duplicateOfId: bug.duplicate_of_id,
+          resolutionTime: bug.resolution_time,
+          createdAt: bug.created_at,
+          updatedAt: bug.updated_at,
+          resolvedAt: bug.resolved_at,
+          reproduction: repro ? {
+            id: repro.id,
+            bugReportId: repro.bug_report_id,
+            steps: repro.steps,
+            expectedBehavior: repro.expected_behavior,
+            actualBehavior: repro.actual_behavior,
+            errorLogSummary: repro.error_log_summary,
+          } : null,
+          similarBugs: similar.map((s: any) => ({
+            id: s.id,
+            bugReportId: s.bug_report_id,
+            similarBugId: s.similar_bug_id,
+            similarityScore: Number(s.similarity_score),
+            reason: s.reason,
+          })),
+        };
+      });
 
       return { items: enriched, total };
     }),

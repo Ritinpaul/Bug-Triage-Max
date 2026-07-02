@@ -164,24 +164,38 @@ export const messageRouter = createRouter({
         ? await pg`SELECT * FROM messages WHERE source = ${source} ORDER BY created_at DESC LIMIT ${limit}`
         : await pg`SELECT * FROM messages ORDER BY created_at DESC LIMIT ${limit}`;
 
+      const messageIds = items.map((m: any) => m.id);
+      let parsedByMessageId: Record<number, any> = {};
+      let bugByMessageId: Record<number, any> = {};
+
+      if (messageIds.length > 0) {
+        const parsed = await pg`SELECT * FROM parsed_results WHERE message_id IN ${pg(messageIds)}`;
+        parsed.forEach((p: any) => {
+          parsedByMessageId[p.message_id] = p;
+        });
+
+        const bugs = await pg`SELECT * FROM bug_reports WHERE message_id IN ${pg(messageIds)}`;
+        bugs.forEach((b: any) => {
+          bugByMessageId[b.message_id] = b;
+        });
+      }
+
       // Enrich with parsed data and bug
-      const enriched = await Promise.all(
-        items.map(async (m: any) => {
-          const parsed = await pg`SELECT * FROM parsed_results WHERE message_id = ${m.id} LIMIT 1`;
-          const bug = await pg`SELECT * FROM bug_reports WHERE message_id = ${m.id} LIMIT 1`;
-          return {
-            id: m.id, source: m.source, rawContent: m.raw_content,
-            senderId: m.sender_id, senderName: m.sender_name, senderEmail: m.sender_email,
-            channel: m.channel, status: m.status, createdAt: m.created_at,
-            parsed: parsed[0] ? { ...parsed[0], overallConfidence: Number(parsed[0].overall_confidence) } : null,
-            bug: bug[0] ? {
-              id: bug[0].id, title: bug[0].title, severity: bug[0].severity,
-              status: bug[0].status, assigneeHandle: bug[0].assignee_handle,
-              component: bug[0].component, priorityScore: Number(bug[0].priority_score),
-            } : null,
-          };
-        })
-      );
+      const enriched = items.map((m: any) => {
+        const parsed = parsedByMessageId[m.id];
+        const bug = bugByMessageId[m.id];
+        return {
+          id: m.id, source: m.source, rawContent: m.raw_content,
+          senderId: m.sender_id, senderName: m.sender_name, senderEmail: m.sender_email,
+          channel: m.channel, status: m.status, createdAt: m.created_at,
+          parsed: parsed ? { ...parsed, overallConfidence: Number(parsed.overall_confidence) } : null,
+          bug: bug ? {
+            id: bug.id, title: bug.title, severity: bug.severity,
+            status: bug.status, assigneeHandle: bug.assignee_handle,
+            component: bug.component, priorityScore: Number(bug.priority_score),
+          } : null,
+        };
+      });
 
       return enriched;
     }),
