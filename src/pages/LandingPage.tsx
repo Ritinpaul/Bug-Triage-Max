@@ -9,6 +9,8 @@ import {
   ArrowRight,
   Globe,
   Check,
+  Rocket,
+  Terminal,
 } from "lucide-react";
 
 /* ─── Floating Bug Icon (like the envelopes in the reference) ── */
@@ -155,15 +157,11 @@ export default function LandingPage() {
             </Link>
 
             <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              {["Home", "Solutions", "Pricing", "Contact"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide"
-                >
-                  {item}
-                </a>
-              ))}
+              <a href="#home" className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide">Home</a>
+              <a href="#solutions" className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide">Solutions</a>
+              <a href="#pricing" className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide">Pricing</a>
+              <Link to="/docs" className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide">Docs</Link>
+              <a href="#contact" className="text-sm font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap tracking-wide">Contact</a>
             </div>
 
             <div className="flex items-center gap-3 z-10 flex-shrink-0">
@@ -268,6 +266,106 @@ export default function LandingPage() {
               Try it first
             </a>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ─── Developer Tools Section ────────────────────────────── */}
+      <section className="py-16 px-6 bg-slate-900 relative overflow-hidden text-white">
+        {/* Glow effect */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-sky-500/20 blur-[120px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Built for developers.</h2>
+            <p className="text-white/60 max-w-xl mx-auto text-lg">
+              Interact with your bug pipeline using the tools you already know and love.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* MCP Card */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-slate-800/50 border border-slate-700/50 rounded-3xl p-8 flex flex-col backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-sky-500/20 flex items-center justify-center border border-sky-500/30">
+                  <Rocket className="w-6 h-6 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">AI-Native Integration</h3>
+                  <p className="text-sm text-slate-400">Model Context Protocol (MCP)</p>
+                </div>
+              </div>
+              <p className="text-slate-300 mb-6 flex-1">
+                Connect Claude Desktop or Cursor to your bug pipeline. Let AI triage bugs, assign team members, and check stats directly from your chat.
+              </p>
+              <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-sky-300 mb-6 overflow-hidden">
+                <div className="text-slate-500 mb-2"># claude_desktop_config.json</div>
+                "mcpServers": {'{'}<br/>
+                &nbsp;&nbsp;"bugpulse": {'{'}<br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;"command": "npx",<br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;"args": ["-y", "@bugpulse/mcp"],<br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;"env": {'{'} "BUGPULSE_API_URL": "..." {'}'}<br/>
+                &nbsp;&nbsp;{'}'}<br/>
+                {'}'}
+              </div>
+              <Link to="/docs/mcp" className="flex items-center gap-2 text-sm font-semibold text-sky-400 hover:text-sky-300 transition-colors mt-auto">
+                Read MCP Docs <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+
+            {/* CLI Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-slate-800/50 border border-slate-700/50 rounded-3xl p-8 flex flex-col backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                  <Terminal className="w-6 h-6 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Powerful Terminal CLI</h3>
+                  <p className="text-sm text-slate-400">Terminal interface</p>
+                </div>
+              </div>
+              <p className="text-slate-300 mb-6 flex-1">
+                Manage bugs without leaving your terminal. Run queries, view rich ASCII dashboards, and watch new reports stream in real-time.
+              </p>
+              <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-indigo-300 mb-6 overflow-hidden">
+                <div className="text-slate-500 mb-2"># Terminal</div>
+                $ bugpulse list --status open --severity P0<br/>
+                <br/>
+                ╭───┬──────────────┬──────────┬────────╮<br/>
+                │ID │Title         │Severity  │Assignee│<br/>
+                ├───┼──────────────┼──────────┼────────┤<br/>
+                │#4 │Payment crash │P0        │@alice  │<br/>
+                ╰───┴──────────────┴──────────┴────────╯
+              </div>
+              <Link to="/docs/cli" className="flex items-center gap-2 text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors mt-auto">
+                Read CLI Docs <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </div>
+          
+          {/* Trust bar */}
+          <div className="mt-16 pt-8 border-t border-slate-800 text-center">
+            <p className="text-sm font-semibold text-slate-400 mb-6 uppercase tracking-wider">Works seamlessly with your stack</p>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="flex items-center gap-2 font-bold text-xl"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" className="w-8 h-8" alt="GitHub" /> GitHub</div>
+              <div className="flex items-center gap-2 font-bold text-xl"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/slack/slack-original.svg" className="w-8 h-8" alt="Slack" /> Slack</div>
+              <div className="flex items-center gap-2 font-bold text-xl"><Terminal className="w-8 h-8" /> Cursor</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -405,23 +503,56 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Footer ─────────────────────────────────────── */}
-      <footer className="py-8 px-6 border-t border-[#0f172a]/5">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-sky-400 flex items-center justify-center">
-              <Bug className="w-3.5 h-3.5 text-white" />
+      <footer className="py-16 px-6 border-t border-[#0f172a]/5 bg-white">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-full bg-sky-400 flex items-center justify-center">
+                <Bug className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-black text-[#0f172a]">BugPulse</span>
             </div>
-            <span className="text-sm font-bold text-[#0f172a]/60">Bug Triage Max</span>
+            <p className="text-sm text-[#0f172a]/50 mb-6">Built for teams that ship fast and break things, but want to fix them even faster.</p>
+            <a
+              href="https://github.com/Ritinpaul/Bug-Triage-Max"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#0f172a]/40 hover:text-[#0f172a]/80 transition-colors flex items-center gap-2 text-sm font-semibold"
+            >
+              <Github className="w-4 h-4" /> Star on GitHub
+            </a>
           </div>
-          <p className="text-xs text-[#0f172a]/30">© 2026 Bug Triage Max. Built for teams that ship.</p>
-          <a
-            href="https://github.com/Ritinpaul/Bug-Triage-Max"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#0f172a]/30 hover:text-[#0f172a]/60 transition-colors"
-          >
-            <Github className="w-4 h-4" />
-          </a>
+          
+          <div>
+            <h4 className="font-bold text-[#0f172a] mb-4">Product</h4>
+            <ul className="space-y-3">
+              <li><Link to="/login" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Dashboard</Link></li>
+              <li><a href="#pricing" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Pricing</a></li>
+              <li><Link to="/login" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Sign Up</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-[#0f172a] mb-4">Developers</h4>
+            <ul className="space-y-3">
+              <li><Link to="/docs" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Documentation</Link></li>
+              <li><Link to="/docs/mcp" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">MCP Server Docs</Link></li>
+              <li><Link to="/docs/cli" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">CLI Reference</Link></li>
+              <li><Link to="/docs/api" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">REST API</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-[#0f172a] mb-4">Company</h4>
+            <ul className="space-y-3">
+              <li><a href="https://github.com/Ritinpaul/Bug-Triage-Max" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">GitHub</a></li>
+              <li><a href="#contact" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Contact</a></li>
+              <li><a href="#" className="text-sm text-[#0f172a]/60 hover:text-sky-600 transition-colors">Privacy Policy</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-[#0f172a]/5 text-center">
+          <p className="text-xs text-[#0f172a]/30">© 2026 BugPulse. All rights reserved.</p>
         </div>
       </footer>
     </div>

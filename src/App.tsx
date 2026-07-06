@@ -11,6 +11,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
+import Docs from "./pages/Docs";
+import Integrations from "./pages/Integrations";
+import Changelog from "./pages/Changelog";
 import { Toaster } from "sonner";
 
 export default function App() {
@@ -21,6 +24,14 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      
+      {/* Docs routes */}
+      <Route path="/docs" element={<Docs />} />
+      <Route path="/docs/:section" element={<Docs />} />
+      <Route path="/docs/:section/:subsection" element={<Docs />} />
+      
+      {/* Changelog route */}
+      <Route path="/changelog" element={<Changelog />} />
 
       {/* Protected app routes — unauthenticated users are redirected to /login */}
       <Route element={<ProtectedRoute />}>
@@ -29,6 +40,7 @@ export default function App() {
           <Route path="/issues" element={<Issues />} />
           <Route path="/issues/:id" element={<BugDetail />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/integrations" element={<Integrations />} />
           <Route path="/release-notes" element={<ReleaseNotes />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

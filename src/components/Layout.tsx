@@ -18,6 +18,8 @@ import {
   Moon,
   Sun,
   X,
+  BookOpen,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/providers/trpc";
@@ -27,7 +29,10 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/issues", label: "Issues", icon: Bug },
   { path: "/analytics", label: "Analytics", icon: BarChart3 },
-  { path: "/release-notes", label: "Release Notes", icon: FileText },
+  { path: "/integrations", label: "Integrations", icon: Plug },
+  { path: "/docs", label: "Docs", icon: BookOpen },
+  { path: "/changelog", label: "Changelog", icon: FileText },
+  { path: "/release-notes", label: "AI Release Gen", icon: FileText },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -73,7 +78,7 @@ export function Layout() {
             <Bug className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-800 dark:text-white tracking-tight leading-tight">Bug Triage Max</h1>
+            <h1 className="text-sm font-black text-slate-800 dark:text-white tracking-tight leading-tight">BugPulse</h1>
             <p className="text-[10px] text-slate-400 font-mono mt-0.5">AI-Powered</p>
           </div>
         </Link>
@@ -211,7 +216,7 @@ export function Layout() {
             <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
               <Bug className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-sm font-black text-slate-800 dark:text-white">Bug Triage Max</h1>
+            <h1 className="text-sm font-black text-slate-800 dark:text-white">BugPulse</h1>
           </div>
           <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
             <Menu className="w-5 h-5" />
