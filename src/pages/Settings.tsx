@@ -54,6 +54,15 @@ export default function Settings() {
   const { data: integrations, refetch: refetchIntegrations } = trpc.integrations.list.useQuery();
   const { data: team } = trpc.team.list.useQuery();
   const { data: config } = trpc.integrations.config.useQuery();
+  const { data: subStatus } = trpc.tenants.getSubscriptionStatus.useQuery();
+  
+  const createCheckout = trpc.tenants.createCheckoutSession.useMutation({
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+    onError: (err) => toast.error(`Checkout failed: ${err.message}`)
+  });
+
   const [syncResult, setSyncResult] = useState<{
     synced: number; autoResolved: number; reopened: number;
   } | null>(null);
@@ -86,6 +95,45 @@ export default function Settings() {
         <p className="text-sm text-slate-455 mt-0.5 font-medium">
           Manage integrations, team, and system configuration
         </p>
+      </motion.div>
+
+      {/* Billing */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
+        <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
+          <Shield className="w-4 h-4 text-sky-500" />
+          Billing & Usage
+        </h2>
+        <GlassCard className="p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-700">Current Plan: <span className="capitalize">{subStatus?.subscription?.plan || "Free"}</span></p>
+              <p className="text-[11px] text-slate-450 font-medium">Status: {subStatus?.subscription?.status || "incomplete"}</p>
+            </div>
+            {subStatus?.subscription?.plan !== "pro" && (
+              <button
+                onClick={() => createCheckout.mutate()}
+                disabled={createCheckout.isPending}
+                className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              >
+                {createCheckout.isPending ? "Loading..." : "Upgrade to Pro"}
+              </button>
+            )}
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Bugs Processed This Month</span>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{subStatus?.usage?.bugsProcessedCount || 0} / {subStatus?.subscription?.status === "active" ? "Unlimited" : "50"}</span>
+            </div>
+            {subStatus?.subscription?.status !== "active" && (
+              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
+                <div 
+                  className="bg-sky-500 h-2 rounded-full" 
+                  style={{ width: `${Math.min(((subStatus?.usage?.bugsProcessedCount || 0) / 50) * 100, 100)}%` }}
+                ></div>
+              </div>
+            )}
+          </div>
+        </GlassCard>
       </motion.div>
 
       {/* Appearance */}

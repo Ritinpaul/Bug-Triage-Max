@@ -14,7 +14,7 @@ import {
   similarBugMatches,
   teamMembers,
 } from "../../db/schema";
-import { eq, desc, sql, gte } from "drizzle-orm";
+import { eq, desc, sql, gte, and, ne } from "drizzle-orm";
 import {
   parseMessageWithGemini,
   generateReproStepsWithGemini,
@@ -33,81 +33,8 @@ import {
 // Allows later stages to update the same Lemma record
 const lemmaRecordCache = new Map<number, string>();
 
-// ─── Intent Classification (pattern fallback) ─────────────────────────
-const INTENT_PATTERNS: Record<string, RegExp[]> = {
-  bug_report: [
-    /broke|broken|bug|crash|error|fail|failure|not working|doesn't work|wtf|broken again|timeout|hang|freeze|stuck/i,
-  ],
-  feature_request: [
-    /add|feature|request|would be nice|should have|need to|support for|implement/i,
-  ],
-  complaint: [
-    /slow|terrible|awful|hate|worst|annoying|frustrat|disappoint/i,
-  ],
-  question: [
-    /how to|how do|what is|where is|why does|can i|help with/i,
-  ],
-};
-
-const COMPONENT_PATTERNS: Record<string, RegExp[]> = {
-  auth: [/login|logout|signin|sign out|password|2fa|mfa|oauth|token|auth|session|credential/i],
-  billing: [/invoice|payment|charge|billing|subscription|price|cost|plan|receipt|refund/i],
-  ui: [/button|modal|dropdown|menu|page|screen|layout|color|theme|font|icon|click|scroll|display|view/i],
-  api: [/endpoint|api|route|request|response|status code|404|500|json|payload|header/i],
-  database: [/db|database|query|table|column|migration|sql|mongo|postgres|redis|cache/i],
-  notifications: [/email|notification|alert|push|sms|webhook|slack|message|remind/i],
-};
-
-const SEVERITY_KEYWORDS: Record<string, number> = {
-  broke: 30, broken: 30, crash: 30, down: 30, "not working": 25,
-  "doesn't work": 25, timeout: 20, hang: 20, freeze: 20, stuck: 15,
-  wtf: 10, error: 10, fail: 10, urgent: 20, critical: 30, asap: 15,
-};
-
-function classifyIntentPattern(content: string): { intent: string; confidence: number } {
-  const scores: Record<string, number> = {};
-  for (const [intent, patterns] of Object.entries(INTENT_PATTERNS)) {
-    scores[intent] = 0;
-    for (const pattern of patterns) {
-      const matches = content.match(pattern);
-      if (matches) scores[intent] += matches.length;
-    }
-  }
-  const total = Object.values(scores).reduce((a, b) => a + b, 0);
-  if (total === 0) return { intent: "other", confidence: 0.7 };
-  const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-  return { intent: best[0], confidence: Math.min(0.95, 0.5 + best[1] * 0.15) };
-}
-
-function classifyComponentPattern(content: string): { component: string; confidence: number } {
-  const scores: Record<string, number> = {};
-  for (const [component, patterns] of Object.entries(COMPONENT_PATTERNS)) {
-    scores[component] = 0;
-    for (const pattern of patterns) {
-      const matches = content.match(pattern);
-      if (matches) scores[component] += matches.length;
-    }
-  }
-  const total = Object.values(scores).reduce((a, b) => a + b, 0);
-  if (total === 0) return { component: "other", confidence: 0.6 };
-  const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-  return { component: best[0], confidence: Math.min(0.95, 0.5 + best[1] * 0.2) };
-}
-
-function calculateSeverityPattern(content: string): { score: number; label: string } {
-  let score = 0;
-  const lower = content.toLowerCase();
-  for (const [keyword, weight] of Object.entries(SEVERITY_KEYWORDS)) {
-    if (lower.includes(keyword)) score += weight;
-  }
-  if (/again|still|never|always/.test(lower)) score += 10;
-  score = Math.min(100, score);
-  let label = "P3";
-  if (score >= 80) label = "P0";
-  else if (score >= 60) label = "P1";
-  else if (score >= 40) label = "P2";
-  return { score, label };
-}
+// ─── Intent Classification (LLM Required) ─────────────────────────
+// Naive fallback removed. Gemini is now required for robust classification.
 
 function generateTitle(content: string, component: string): string {
   const lower = content.toLowerCase();
@@ -143,40 +70,24 @@ export async function runParserAgent(messageId: number) {
   if (!message) throw new Error("Message not found");
 
   // Try Gemini first, fall back to pattern matching
-  let intent: string;
-  let intentConfidence: number;
-  let component: string;
-  let componentConfidence: number;
-  let severityScore: number;
-  let severityLabel: string;
-  let keywords: string[];
-  let usedGemini = false;
+  if (!geminiAvailable) {
+    throw new Error("Gemini API is required for agent processing. Please configure the GEMINI_API_KEY environment variable.");
+  }
 
   const geminiResult = await parseMessageWithGemini(message.rawContent);
 
-  if (geminiResult) {
-    intent = geminiResult.intent;
-    intentConfidence = geminiResult.intentConfidence;
-    component = geminiResult.component;
-    componentConfidence = geminiResult.componentConfidence;
-    severityScore = geminiResult.severityScore;
-    severityLabel = geminiResult.severityLabel;
-    keywords = geminiResult.keywords;
-    usedGemini = true;
-  } else {
-    // Fallback to pattern matching
-    const intentResult = classifyIntentPattern(message.rawContent);
-    const componentResult = classifyComponentPattern(message.rawContent);
-    const severityResult = calculateSeverityPattern(message.rawContent);
-    intent = intentResult.intent;
-    intentConfidence = intentResult.confidence;
-    component = componentResult.component;
-    componentConfidence = componentResult.confidence;
-    severityScore = severityResult.score;
-    severityLabel = severityResult.label;
-    keywords = extractKeywords(message.rawContent);
+  if (!geminiResult) {
+    throw new Error("Gemini API failed to parse message.");
   }
 
+  const intent = geminiResult.intent;
+  const intentConfidence = geminiResult.intentConfidence;
+  const component = geminiResult.component;
+  const componentConfidence = geminiResult.componentConfidence;
+  const severityScore = geminiResult.severityScore;
+  const severityLabel = geminiResult.severityLabel;
+  const keywords = geminiResult.keywords;
+  const usedGemini = true;
   const overallConfidence = (intentConfidence + componentConfidence) / 2;
 
   // Generate embedding for vector similarity search
@@ -184,6 +95,7 @@ export async function runParserAgent(messageId: number) {
   const embedding = await generateEmbedding(embeddingText);
 
   const [parsed] = await db.insert(parsedResults).values({
+    tenantId: message.tenantId,
     messageId,
     intent: intent as "bug_report" | "feature_request" | "complaint" | "question" | "other",
     intentConfidence,
@@ -195,27 +107,11 @@ export async function runParserAgent(messageId: number) {
     keywords,
     entities: {
       ...extractEntities(message.rawContent),
-      ...(embedding ? { hasEmbedding: "true" } : {}),
       engine: usedGemini ? "gemini" : "pattern",
     },
+    embedding: embedding ?? null,
     flaggedForReview: overallConfidence < 0.6 ? 1 : 0,
   }).returning({ id: parsedResults.id });
-
-  // Store embedding in a separate JSON field if we have it
-  if (embedding) {
-    // Store serialized embedding in entities for vector search
-    await db
-      .update(parsedResults)
-      .set({
-        entities: {
-          ...extractEntities(message.rawContent),
-          hasEmbedding: "true",
-          engine: usedGemini ? "gemini" : "pattern",
-          embedding: JSON.stringify(embedding),
-        },
-      })
-      .where(eq(parsedResults.id, parsed.id));
-  }
 
   await db.update(messages).set({ status: "parsed" }).where(eq(messages.id, messageId));
 
@@ -296,51 +192,50 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
   });
   if (!parsed || !message) throw new Error("Data not found");
 
-  // Get current message embedding (stored in entities)
+  // Get current message embedding (stored in embedding column)
   let currentEmbedding: number[] | null = null;
-  try {
-    const ents = parsed.entities as Record<string, string> | null;
-    if (ents?.embedding) {
-      currentEmbedding = JSON.parse(ents.embedding) as number[];
-    }
-  } catch {
-    // no embedding stored
+  if (parsed.embedding) {
+    currentEmbedding = parsed.embedding;
   }
 
-  // Find similar bugs using vector similarity (if available) or keyword matching
-  const recentBugs = await db.query.bugReports.findMany({
-    where: gte(bugReports.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
-    orderBy: [desc(bugReports.createdAt)],
-    limit: 50,
-  });
-
-  const parsedKeywords = (parsed.keywords || []) as string[];
+  // Find similar bugs using vector similarity or keyword matching
   const similar: Array<{ bugId: number; score: number; isDuplicate: boolean }> = [];
+  const parsedKeywords = (parsed.keywords || []) as string[];
 
-  for (const bug of recentBugs) {
-    if (bug.messageId === messageId) continue;
-    let score = 0;
+  if (currentEmbedding) {
+    const embeddingStr = `[${currentEmbedding.join(',')}]`;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    
+    const rows = await db.select({
+      bugId: bugReports.id,
+      score: sql<number>`1 - (${parsedResults.embedding} <=> ${embeddingStr})`
+    })
+    .from(bugReports)
+    .innerJoin(parsedResults, eq(bugReports.parsedResultId, parsedResults.id))
+    .where(
+      and(
+        gte(bugReports.createdAt, thirtyDaysAgo),
+        ne(bugReports.messageId, messageId)
+      )
+    )
+    .orderBy(sql`${parsedResults.embedding} <=> ${embeddingStr}`)
+    .limit(5);
 
-    if (currentEmbedding) {
-      // Vector similarity: get embedding of the similar bug's parsed result
-      const bugParsed = await db.query.parsedResults.findFirst({
-        where: eq(parsedResults.messageId, bug.messageId),
-      });
-      if (bugParsed) {
-        try {
-          const bugEnts = bugParsed.entities as Record<string, string> | null;
-          if (bugEnts?.embedding) {
-            const bugEmbedding = JSON.parse(bugEnts.embedding) as number[];
-            score = cosineSimilarity(currentEmbedding, bugEmbedding);
-          }
-        } catch {
-          // fall through to keyword matching
-        }
+    for (const r of rows) {
+      if (r.score > 0.3) {
+        similar.push({ bugId: r.bugId, score: Math.min(1, r.score), isDuplicate: r.score > 0.85 });
       }
     }
-
+  } else {
     // Fallback or supplement with keyword matching
-    if (score === 0) {
+    const recentBugs = await db.query.bugReports.findMany({
+      where: and(gte(bugReports.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), ne(bugReports.messageId, messageId)),
+      orderBy: [desc(bugReports.createdAt)],
+      limit: 50,
+    });
+    
+    for (const bug of recentBugs) {
+      let score = 0;
       if (bug.component === parsed.component) score += 0.3;
       const bugMessage = await db.query.messages.findFirst({
         where: eq(messages.id, bug.messageId),
@@ -350,10 +245,9 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
         const overlap = bugKeywords.filter((k) => parsedKeywords.includes(k)).length;
         score += (overlap / Math.max(parsedKeywords.length, 1)) * 0.7;
       }
-    }
-
-    if (score > 0.3) {
-      similar.push({ bugId: bug.id, score: Math.min(1, score), isDuplicate: score > 0.85 });
+      if (score > 0.3) {
+        similar.push({ bugId: bug.id, score: Math.min(1, score), isDuplicate: score > 0.85 });
+      }
     }
   }
 

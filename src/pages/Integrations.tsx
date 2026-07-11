@@ -220,9 +220,9 @@ export default function Integrations() {
                 </p>
                 <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-sky-200 dark:border-sky-900 rounded-lg p-1 pr-3">
                   <div className="bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-md font-mono text-sm text-slate-700 dark:text-slate-300 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                    nuuvixx@gmail.com
+                    [your-prefix]@inbound.bugpulse.com
                   </div>
-                  <button className="text-sky-600 dark:text-sky-400 hover:text-sky-700 text-sm font-semibold shrink-0">
+                  <button className="text-sky-600 dark:text-sky-400 hover:text-sky-700 text-sm font-semibold shrink-0" onClick={() => navigator.clipboard.writeText("[your-prefix]@inbound.bugpulse.com")}>
                     Copy
                   </button>
                 </div>
@@ -236,7 +236,7 @@ export default function Integrations() {
                 <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
                   <li>Go to Gmail Settings {'>'} Forwarding and POP/IMAP.</li>
                   <li>Click "Add a forwarding address".</li>
-                  <li>Enter <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">nuuvixx@gmail.com</code>.</li>
+                  <li>Enter <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">[your-prefix]@inbound.bugpulse.com</code>.</li>
                   <li>A bug will be created in your dashboard containing the verification code.</li>
                   <li>Enter the code in Gmail to verify.</li>
                 </ol>
@@ -254,8 +254,72 @@ export default function Integrations() {
           </div>
         </div>
       )}
+
+      {activeModal === 'slack' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                  <Slack className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Configure Slack Webhook</h2>
+                  <p className="text-xs text-slate-500">Connect Slack Events API to BugPulse</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setActiveModal(null)}
+                className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 rounded-xl p-4">
+                <h4 className="font-semibold text-sky-800 dark:text-sky-300 mb-2">Slack Webhook URL</h4>
+                <p className="text-sm text-sky-700 dark:text-sky-400 mb-4">
+                  Provide this URL to your Slack App under "Event Subscriptions" to pipe messages directly to BugPulse.
+                </p>
+                <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-sky-200 dark:border-sky-900 rounded-lg p-1 pr-3">
+                  <div className="bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-md font-mono text-sm text-slate-700 dark:text-slate-300 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                    https://your-domain.com/api/webhooks/slack
+                  </div>
+                  <button className="text-sky-600 dark:text-sky-400 hover:text-sky-700 text-sm font-semibold shrink-0" onClick={() => navigator.clipboard.writeText("https://your-domain.com/api/webhooks/slack")}>
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2">Setup Instructions</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Follow these steps to configure your Slack app:
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <li>Go to <a href="https://api.slack.com/apps" target="_blank" className="text-sky-500 underline">Slack API Apps</a> and create an app.</li>
+                  <li>In your app settings, navigate to <strong>Event Subscriptions</strong> and toggle "Enable Events".</li>
+                  <li>Paste the Webhook URL above. Slack will send a challenge request to verify the endpoint.</li>
+                  <li>Under <strong>Subscribe to bot events</strong>, add <code>message.channels</code> and <code>message.im</code>.</li>
+                  <li>If testing locally, use <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">ngrok http 3000</code> to expose your dev server, and use the ngrok URL.</li>
+                </ol>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
-      {activeModal && activeModal !== 'email' && (
+      {activeModal && activeModal !== 'email' && activeModal !== 'slack' && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 text-center p-8">
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">

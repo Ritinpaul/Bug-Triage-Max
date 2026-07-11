@@ -9,7 +9,21 @@ import {
   integer,
   real,
   index,
+  customType,
 } from "drizzle-orm/pg-core";
+
+export const vector = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return 'vector(768)';
+  },
+  toDriver(value: number[]): string {
+    return `[${value.join(',')}]`;
+  },
+  fromDriver(value: string | number[]): number[] {
+    if (typeof value === 'string') return JSON.parse(value);
+    return value;
+  },
+});
 
 // ─── Enums ────────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -26,6 +40,64 @@ export const integrationServiceEnum = pgEnum("integration_service", ["github", "
 export const integrationStatusValueEnum = pgEnum("integration_status_value", ["online", "offline", "degraded", "error"]);
 export const releaseNoteStatusEnum = pgEnum("release_note_status", ["draft", "published"]);
 
+
+// ─── Tenants (Workspaces) ─────────────────────────────────────────────
+export const tenants = pgTable("tenants", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  slackTeamId: varchar("slack_team_id", { length: 255 }),
+  inboundEmailPrefix: varchar("inbound_email_prefix", { length: 255 }),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Tenant = typeof tenants.$inferSelect;
+export type InsertTenant = typeof tenants.$inferInsert;
+
+export const tenantMembers = pgTable("tenant_members", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
+  userId: integer("user_id").notNull(),
+  role: roleEnum("role").default("user").notNull(),
+  defaultTenantId: integer("default_tenant_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_tenant_member").on(table.tenantId, table.userId),
+]);
+
+export type TenantMember = typeof tenantMembers.$inferSelect;
+export type InsertTenantMember = typeof tenantMembers.$inferInsert;
+
+// ─── Billing & Usage ──────────────────────────────────────────────────
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull().unique(),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  status: varchar("status", { length: 50 }).notNull().default("incomplete"), // active, past_due, canceled, etc.
+  plan: varchar("plan", { length: 50 }).notNull().default("free"), // free, pro
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: integer("cancel_at_period_end").default(0), // 0 or 1
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export const usageMetrics = pgTable("usage_metrics", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
+  month: varchar("month", { length: 7 }).notNull(), // format YYYY-MM
+  bugsProcessedCount: integer("bugs_processed_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_usage_tenant_month").on(table.tenantId, table.month),
+]);
+
+export type UsageMetric = typeof usageMetrics.$inferSelect;
+
 // ─── Users (OAuth) ────────────────────────────────────────────────────
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -35,6 +107,7 @@ export const users = pgTable("users", {
   passwordHash: varchar("password_hash", { length: 255 }),
   avatar: text("avatar"),
   role: roleEnum("role").default("user").notNull(),
+  defaultTenantId: integer("default_tenant_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   lastSignInAt: timestamp("last_sign_in_at").defaultNow().notNull(),
@@ -46,6 +119,7 @@ export type InsertUser = typeof users.$inferInsert;
 // ─── Team Members (for auto-assignment) ───────────────────────────────
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   handle: varchar("handle", { length: 100 }).notNull().unique(),
   email: varchar("email", { length: 320 }),
@@ -61,6 +135,7 @@ export const messages = pgTable(
   "messages",
   {
     id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
     source: sourceEnum("source").notNull(),
     rawContent: text("raw_content").notNull(),
     senderId: varchar("sender_id", { length: 255 }).notNull(),
@@ -86,6 +161,7 @@ export type InsertMessage = typeof messages.$inferInsert;
 // ─── Parsed Results (AI Parser Agent output) ──────────────────────────
 export const parsedResults = pgTable("parsed_results", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   messageId: integer("message_id").notNull(),
   intent: intentEnum("intent").notNull(),
   intentConfidence: real("intent_confidence").notNull(),
@@ -96,6 +172,7 @@ export const parsedResults = pgTable("parsed_results", {
   overallConfidence: real("overall_confidence").notNull(),
   keywords: json("keywords").$type<string[]>(),
   entities: json("entities").$type<Record<string, unknown>>(),
+  embedding: vector("embedding"),
   flaggedForReview: integer("flagged_for_review").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
@@ -109,6 +186,7 @@ export const bugReports = pgTable(
   "bug_reports",
   {
     id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
     messageId: integer("message_id").notNull(),
     parsedResultId: integer("parsed_result_id").notNull(),
     title: varchar("title", { length: 500 }).notNull(),
@@ -142,6 +220,7 @@ export type BugReport = typeof bugReports.$inferSelect;
 // ─── Similar Bug Matches ──────────────────────────────────────────────
 export const similarBugMatches = pgTable("similar_bug_matches", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   bugReportId: integer("bug_report_id").notNull(),
   similarBugId: integer("similar_bug_id").notNull(),
   similarityScore: real("similarity_score").notNull(),
@@ -157,6 +236,7 @@ export type SimilarBugMatch = typeof similarBugMatches.$inferSelect;
 // ─── Reproduction Steps ───────────────────────────────────────────────
 export const reproductionSteps = pgTable("reproduction_steps", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   bugReportId: integer("bug_report_id").notNull(),
   steps: json("steps").$type<string[]>().notNull(),
   expectedBehavior: text("expected_behavior"),
@@ -177,6 +257,7 @@ export const agentActivities = pgTable(
   "agent_activities",
   {
     id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
     agentName: agentNameEnum("agent_name").notNull(),
     action: varchar("action", { length: 255 }).notNull(),
     targetId: integer("target_id"),
@@ -194,6 +275,7 @@ export type AgentActivity = typeof agentActivities.$inferSelect;
 // ─── Integration Status ───────────────────────────────────────────────
 export const integrationStatus = pgTable("integration_status", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   service: integrationServiceEnum("service").notNull().unique(),
   status: integrationStatusValueEnum("status").default("offline").notNull(),
   lastCheckedAt: timestamp("last_checked_at").defaultNow().notNull(),
@@ -208,6 +290,7 @@ export type IntegrationStatus = typeof integrationStatus.$inferSelect;
 // ─── Analytics Snapshots ──────────────────────────────────────────────
 export const analyticsSnapshots = pgTable("analytics_snapshots", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   snapshotDate: timestamp("snapshot_date").defaultNow().notNull(),
   totalMessages: integer("total_messages").default(0).notNull(),
   totalBugs: integer("total_bugs").default(0).notNull(),
@@ -224,6 +307,7 @@ export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 // ─── Release Notes ────────────────────────────────────────────────────
 export const releaseNotes = pgTable("release_notes", {
   id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull(),
   tagName: varchar("tag_name", { length: 100 }).notNull(),
   name: varchar("name", { length: 500 }).notNull(),
   body: text("body").notNull(),

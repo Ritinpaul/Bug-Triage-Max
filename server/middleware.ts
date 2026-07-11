@@ -46,7 +46,7 @@ export const createRouter = t.router;
 export const publicQuery = t.procedure;
 export const createCallerFactory = t.createCallerFactory;
 
-const requireAuth = t.middleware(async (opts) => {
+export const requireAuth = t.middleware(async (opts) => {
   const { ctx, next } = opts;
 
   if (!ctx.user) {
@@ -57,6 +57,19 @@ const requireAuth = t.middleware(async (opts) => {
   }
 
   return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
+const requireTenant = t.middleware(async (opts) => {
+  const { ctx, next } = opts;
+
+  if (!ctx.tenantId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "A workspace (tenant) is required for this operation.",
+    });
+  }
+
+  return next({ ctx: { ...ctx, tenantId: ctx.tenantId } });
 });
 
 function requireRole(role: string) {
@@ -74,5 +87,5 @@ function requireRole(role: string) {
   });
 }
 
-export const authedQuery = t.procedure.use(requireAuth);
+export const authedQuery = t.procedure.use(requireAuth).use(requireTenant);
 export const adminQuery = authedQuery.use(requireRole("admin"));

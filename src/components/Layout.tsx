@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { DemoBanner } from "@/components/DemoBanner";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import {
   LayoutDashboard,
@@ -181,6 +182,9 @@ export function Layout() {
             <span className="text-sm font-semibold">Toggle Theme</span>
           </button>
         </div>
+
+        {/* Tenant Switcher */}
+        {user && <TenantSwitcher />}
 
         {/* User */}
         <div className="px-4 py-3 border-t border-[#0f172a]/08">

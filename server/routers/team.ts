@@ -1,28 +1,30 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, authedQuery } from "../middleware";
 import { getDb } from "../queries/connection";
 import { teamMembers } from "../../db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export const teamRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
     const items = await db.query.teamMembers.findMany({
+      where: eq(teamMembers.tenantId, ctx.tenantId),
       orderBy: [desc(teamMembers.createdAt)],
     });
     return items;
   }),
 
-  getByHandle: publicQuery
+  getByHandle: authedQuery
     .input(z.object({ handle: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = getDb();
       return db.query.teamMembers.findFirst({
-        where: eq(teamMembers.handle, input.handle),
+        where: (teamMembers, { and, eq }) => 
+          and(eq(teamMembers.handle, input.handle), eq(teamMembers.tenantId, ctx.tenantId)),
       });
     }),
 
-  create: publicQuery
+  create: authedQuery
     .input(
       z.object({
         name: z.string().min(1),
@@ -32,9 +34,10 @@ export const teamRouter = createRouter({
         isOnCall: z.boolean().optional().default(false),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const [result] = await db.insert(teamMembers).values({
+        tenantId: ctx.tenantId,
         name: input.name,
         handle: input.handle,
         email: input.email,
@@ -44,7 +47,7 @@ export const teamRouter = createRouter({
       return { id: result.id };
     }),
 
-  update: publicQuery
+  update: authedQuery
     .input(
       z.object({
         id: z.number(),
@@ -55,7 +58,7 @@ export const teamRouter = createRouter({
         isOnCall: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const { id, ...updates } = input;
       await db
@@ -64,15 +67,19 @@ export const teamRouter = createRouter({
           ...updates,
           isOnCall: updates.isOnCall !== undefined ? (updates.isOnCall ? 1 : 0) : undefined,
         })
-        .where(eq(teamMembers.id, id));
+        .where((teamMembers, { and, eq }) => 
+          and(eq(teamMembers.id, id), eq(teamMembers.tenantId, ctx.tenantId))
+        );
       return { success: true };
     }),
 
-  delete: publicQuery
+  delete: authedQuery
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      await db.delete(teamMembers).where(eq(teamMembers.id, input.id));
+      await db.delete(teamMembers).where(
+        (teamMembers, { and, eq }) => and(eq(teamMembers.id, input.id), eq(teamMembers.tenantId, ctx.tenantId))
+      );
       return { success: true };
     }),
 });

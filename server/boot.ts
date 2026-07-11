@@ -9,13 +9,18 @@ import { env } from "./lib/env";
 import { createOAuthCallbackHandler } from "./kimi/auth";
 import { Paths } from "@contracts/constants";
 import { createWebhookRouter } from "./services/webhook-handlers";
-import { startEmailPoller } from "./services/email-service";
 import { systemEvents } from "./services/events";
 import { authenticateRequest } from "./kimi/auth";
 import { getDb } from "./queries/connection";
 import { bugReports } from "../db/schema";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
+
+// ── Initialize Background Queue ───────────────────────────────────────
+import { initQueue } from "./services/queue";
+await initQueue().catch(err => {
+  console.error("Failed to initialize queue:", err);
+});
 
 // ── Webhook routes (registered BEFORE tRPC catch-all) ────────────────
 const webhookRouter = createWebhookRouter();
@@ -104,16 +109,8 @@ if (env.isProduction) {
   const { serveStaticFiles } = await import("./lib/vite");
   serveStaticFiles(app);
 
-  // Start email poller (only runs if EMAIL_IMAP_* env vars are set)
-  startEmailPoller(60_000);
-
   const port = parseInt(process.env.PORT || "3000");
   serve({ fetch: app.fetch, port }, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
-}
-
-// Also start email poller in dev mode if configured
-if (!env.isProduction && process.env.EMAIL_IMAP_HOST) {
-  startEmailPoller(60_000);
 }

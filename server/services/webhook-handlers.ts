@@ -7,9 +7,9 @@
 import { Hono } from "hono";
 import type { HttpBindings } from "@hono/node-server";
 import { getDb } from "../queries/connection";
-import { messages } from "../../db/schema";
-import { eq, and, gte } from "drizzle-orm";
-import { processMessage } from "../services/agent-service";
+import { messages, tenants } from "../../db/schema";
+import { eq, and, gte, sql } from "drizzle-orm";
+import { enqueueMessageProcessing } from "../services/queue";
 import { systemEvents } from "./events";
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET ?? "";
@@ -73,6 +73,7 @@ async function isDuplicate(senderId: string, rawContent: string): Promise<boolea
 }
 
 async function insertAndProcess(payload: {
+  tenantId: number;
   source: "slack" | "email" | "form";
   rawContent: string;
   senderId: string;
@@ -81,9 +82,41 @@ async function insertAndProcess(payload: {
   channel?: string;
 }) {
   const db = getDb();
+  const { subscriptions, usageMetrics } = await import("../../db/schema");
+  
+  // 1. Check Usage Limits
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  let limit = 50; // Free tier limit
+  const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.tenantId, payload.tenantId)).limit(1);
+  if (sub && sub.status === "active") {
+    limit = 10000; // Pro tier limit
+  }
+
+  const [usage] = await db.select().from(usageMetrics).where(
+    and(eq(usageMetrics.tenantId, payload.tenantId), eq(usageMetrics.month, currentMonth))
+  ).limit(1);
+
+  if (usage && usage.bugsProcessedCount >= limit) {
+    console.warn(`[Limits] Tenant ${payload.tenantId} exceeded bug limit (${limit}) for month ${currentMonth}. Dropping message.`);
+    return -1; // Or throw error
+  }
+
+  // Increment usage
+  await db.insert(usageMetrics).values({
+    tenantId: payload.tenantId,
+    month: currentMonth,
+    bugsProcessedCount: 1,
+  }).onConflictDoUpdate({
+    target: [usageMetrics.tenantId, usageMetrics.month],
+    set: {
+      bugsProcessedCount: sql`${usageMetrics.bugsProcessedCount} + 1`
+    }
+  });
+
   const contentHash = await sha256Hex(payload.senderId + payload.rawContent);
 
   const [result] = await db.insert(messages).values({
+    tenantId: payload.tenantId,
     source: payload.source,
     rawContent: payload.rawContent,
     senderId: payload.senderId,
@@ -96,12 +129,12 @@ async function insertAndProcess(payload: {
 
   systemEvents.emit("update");
 
-  // Fire-and-forget: don't block the webhook response
-  setTimeout(() => {
-    processMessage(result.id).catch((err) =>
-      console.error(`[Webhook] processMessage(${result.id}) failed:`, err)
-    );
-  }, 50);
+  // Enqueue job in pg-boss
+  try {
+    await enqueueMessageProcessing(result.id);
+  } catch (err) {
+    console.error(`[Webhook] Failed to enqueue message ${result.id}:`, err);
+  }
 
   return result.id;
 }
@@ -109,6 +142,138 @@ async function insertAndProcess(payload: {
 // ─── Webhook Router ───────────────────────────────────────────────────
 export function createWebhookRouter() {
   const webhook = new Hono<{ Bindings: HttpBindings }>();
+
+  // ─── Mailgun Webhook ────────────────────────────────────────────────
+  webhook.post("/api/webhooks/mailgun", async (c) => {
+    let formData: Record<string, string | File> = {};
+    try {
+      formData = await c.req.parseBody();
+    } catch {
+      return c.json({ error: "Invalid form data" }, 400);
+    }
+    
+    // Mailgun signature verification
+    const timestamp = (formData.timestamp as string) ?? "";
+    const token = (formData.token as string) ?? "";
+    const signature = (formData.signature as string) ?? "";
+    
+    const MAILGUN_SIGNING_KEY = process.env.MAILGUN_SIGNING_KEY;
+    if (MAILGUN_SIGNING_KEY) {
+      const crypto = await import("crypto");
+      const hash = crypto
+        .createHmac("sha256", MAILGUN_SIGNING_KEY)
+        .update(timestamp + token)
+        .digest("hex");
+      if (hash !== signature) {
+        return c.json({ error: "Invalid signature" }, 403);
+      }
+    }
+
+    const recipient = (formData.recipient as string) || "";
+    const sender = (formData.sender as string) || (formData.from as string) || "mailgun_user";
+    const subject = (formData.subject as string) || "No Subject";
+    const bodyPlain = (formData['body-plain'] as string) || "";
+    
+    const prefix = recipient.split("@")[0];
+    const db = getDb();
+    
+    let tenantId = 1;
+    if (prefix) {
+      const tenant = await db.query.tenants.findFirst({
+        where: eq(tenants.inboundEmailPrefix, prefix)
+      });
+      if (tenant) {
+        tenantId = tenant.id;
+      } else {
+        console.warn(`[Mailgun Webhook] No tenant found for inbound prefix: ${prefix}`);
+      }
+    }
+
+    const rawContent = `Subject: ${subject}\n\n${bodyPlain}`;
+    
+    if (rawContent.trim().length > 0) {
+      const dup = await isDuplicate(sender, rawContent);
+      if (!dup) {
+        await insertAndProcess({
+          tenantId,
+          source: "email",
+          rawContent,
+          senderId: sender,
+          senderEmail: sender,
+        });
+      }
+    }
+    
+    return c.json({ ok: true });
+  });
+
+  // ─── Stripe Webhook ──────────────────────────────────────────────────
+  webhook.post("/api/webhooks/stripe", async (c) => {
+    const signature = c.req.header("stripe-signature");
+    if (!signature) {
+      return c.json({ error: "No signature" }, 400);
+    }
+
+    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!STRIPE_WEBHOOK_SECRET) {
+      return c.json({ error: "Webhook secret not configured" }, 500);
+    }
+
+    const bodyText = await c.req.text();
+    let event;
+    try {
+      const { default: Stripe } = await import("stripe");
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+      event = stripe.webhooks.constructEvent(bodyText, signature, STRIPE_WEBHOOK_SECRET);
+    } catch (err: any) {
+      console.error(`Webhook signature verification failed: ${err.message}`);
+      return c.json({ error: "Invalid signature" }, 400);
+    }
+
+    const db = getDb();
+    const { subscriptions, tenants } = await import("../../db/schema");
+
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const tenantIdStr = session.client_reference_id;
+        const customerId = session.customer as string;
+        const subscriptionId = session.subscription as string;
+
+        if (tenantIdStr) {
+          const tenantId = parseInt(tenantIdStr, 10);
+          await db.update(tenants)
+            .set({ stripeCustomerId: customerId })
+            .where(eq(tenants.id, tenantId));
+            
+          await db.insert(subscriptions).values({
+            tenantId,
+            stripeSubscriptionId: subscriptionId,
+            status: "active",
+            plan: "pro"
+          }).onConflictDoUpdate({
+            target: subscriptions.tenantId,
+            set: {
+              stripeSubscriptionId: subscriptionId,
+              status: "active",
+              plan: "pro"
+            }
+          });
+        }
+        break;
+      }
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        await db.update(subscriptions)
+          .set({ status: subscription.status })
+          .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
+        break;
+      }
+    }
+
+    return c.json({ received: true });
+  });
 
   // ── Slack Events API ────────────────────────────────────────────────
   webhook.post("/api/webhooks/slack", async (c) => {
@@ -153,10 +318,22 @@ export function createWebhookRouter() {
         const channel = (event.channel as string | undefined) ?? "";
         const username = (event.username as string | undefined) ?? userId;
 
+        let tenantId = 1; // Default fallback for development
+        if (body.team_id) {
+          const db = getDb();
+          const tenant = await db.query.tenants.findFirst({
+            where: eq(tenants.slackTeamId, body.team_id as string)
+          });
+          if (tenant) {
+            tenantId = tenant.id;
+          }
+        }
+
         if (text.trim().length > 0) {
           const dup = await isDuplicate(userId, text);
           if (!dup) {
             await insertAndProcess({
+              tenantId,
               source: "slack",
               rawContent: text,
               senderId: userId,
@@ -237,6 +414,7 @@ export function createWebhookRouter() {
     }
 
     const id = await insertAndProcess({
+      tenantId: 1, // Generic forms fall back to default tenant 1 unless authenticated
       source: "form",
       rawContent,
       senderId,

@@ -28,6 +28,13 @@ const trpcClient = trpc.createClient({
           credentials: "include",
         });
       },
+      headers() {
+        const tenantId = localStorage.getItem("bugpulse_tenant_id");
+        if (tenantId) {
+          return { "x-tenant-id": tenantId };
+        }
+        return {};
+      },
     }),
   ],
 });

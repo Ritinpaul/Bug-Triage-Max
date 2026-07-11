@@ -7,6 +7,7 @@ import { analyticsRouter } from "./routers/analytics";
 import { integrationRouter } from "./routers/integrations";
 import { teamRouter } from "./routers/team";
 import { releaseNotesRouter } from "./routers/release-notes";
+import { tenantRouter } from "./routers/tenants";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -18,6 +19,7 @@ export const appRouter = createRouter({
   integrations: integrationRouter,
   team: teamRouter,
   releaseNotes: releaseNotesRouter,
+  tenants: tenantRouter,
 });
 
 export type AppRouter = typeof appRouter;

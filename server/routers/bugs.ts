@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, authedQuery } from "../middleware";
 import { getDb, getPg } from "../queries/connection";
 import {
   bugReports,
@@ -32,12 +32,12 @@ export const bugRouter = createRouter({
         })
         .optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = getDb();
       const opts = input || { status: "all" as const, severity: "all" as const, limit: 50, offset: 0 };
 
       // Build WHERE clauses dynamically using Drizzle conditions
-      const conditions = [];
+      const conditions = [eq(bugReports.tenantId, ctx.tenantId)];
 
       if (opts.status && opts.status !== "all") {
         conditions.push(eq(bugReports.status, opts.status as any));
@@ -145,45 +145,16 @@ export const bugRouter = createRouter({
       );
 
       return {
-        bug: {
-          id: bug.id,
-          messageId: bug.message_id,
-          parsedResultId: bug.parsed_result_id,
-          title: bug.title,
-          description: bug.description,
-          source: bug.source,
-          component: bug.component,
-          severity: bug.severity,
-          priorityScore: Number(bug.priority_score),
-          status: bug.status,
-          assigneeId: bug.assignee_id,
-          assigneeHandle: bug.assignee_handle,
-          githubIssueId: bug.github_issue_id,
-          githubIssueUrl: bug.github_issue_url,
-          duplicateOfId: bug.duplicate_of_id,
-          resolutionTime: bug.resolution_time,
-          createdAt: bug.created_at,
-          updatedAt: bug.updated_at,
-          resolvedAt: bug.resolved_at,
-        },
-        message: messages[0] || null,
-        parsed: parsed[0] || null,
-        reproduction: repro[0] ? {
-          id: repro[0].id,
-          bugReportId: repro[0].bug_report_id,
-          steps: repro[0].steps,
-          expectedBehavior: repro[0].expected_behavior,
-          actualBehavior: repro[0].actual_behavior,
-          errorLogSummary: repro[0].error_log_summary,
-        } : null,
+        bug,
+        message: message || null,
+        parsed: parsed || null,
+        reproduction: repro || null,
         similarBugs: similarEnriched,
-        assignee: assignee[0] || null,
       };
     }),
 
-
   // Link GitHub issue
-  linkGithub: publicQuery
+  linkGithub: authedQuery
     .input(
       z.object({
         id: z.number(),
@@ -191,7 +162,7 @@ export const bugRouter = createRouter({
         githubIssueUrl: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       await db
         .update(bugReports)
@@ -199,57 +170,34 @@ export const bugRouter = createRouter({
           githubIssueId: input.githubIssueId,
           githubIssueUrl: input.githubIssueUrl,
         })
-        .where(eq(bugReports.id, input.id));
+        .where(and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)));
       return { success: true };
     }),
 
   // Stats
-  stats: publicQuery.query(async () => {
-    const pg = getPg();
+  stats: authedQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const results = await db.select().from(bugReports).where(eq(bugReports.tenantId, ctx.tenantId));
 
-    const result = await pg`
-      SELECT
-        count(*) as total,
-        sum(case when status = 'open' then 1 else 0 end) as open,
-        sum(case when status = 'in_progress' then 1 else 0 end) as "inProgress",
-        sum(case when status = 'resolved' then 1 else 0 end) as resolved,
-        sum(case when status = 'closed' then 1 else 0 end) as closed,
-        avg(priority_score) as "avgPriority"
-      FROM bug_reports
-    `;
-
-    const byComponent = await pg`
-      SELECT component, count(*) as count FROM bug_reports GROUP BY component
-    `;
-
-    const bySeverity = await pg`
-      SELECT severity, count(*) as count FROM bug_reports GROUP BY severity
-    `;
-
-    const byAssignee = await pg`
-      SELECT assignee_handle as "assigneeHandle", count(*) as count
-      FROM bug_reports WHERE assignee_handle IS NOT NULL
-      GROUP BY assignee_handle ORDER BY count(*) DESC LIMIT 5
-    `;
-
-    const r = result[0] || {};
+    const total = results.length;
+    const open = results.filter(r => r.status === 'open').length;
+    const inProgress = results.filter(r => r.status === 'in_progress').length;
+    const resolved = results.filter(r => r.status === 'resolved').length;
+    const closed = results.filter(r => r.status === 'closed').length;
+    
     return {
-      total: Number(r.total || 0),
-      open: Number(r.open || 0),
-      inProgress: Number(r.inProgress || 0),
-      resolved: Number(r.resolved || 0),
-      closed: Number(r.closed || 0),
-      avgPriority: r.avgPriority ? Number(r.avgPriority) : 0,
-      byComponent: byComponent.map((x: any) => ({ component: x.component, count: Number(x.count) })),
-      bySeverity: bySeverity.map((x: any) => ({ severity: x.severity, count: Number(x.count) })),
-      byAssignee: byAssignee.map((x: any) => ({ assigneeHandle: x.assigneeHandle, count: Number(x.count) })),
+      total,
+      open,
+      inProgress,
+      resolved,
+      closed,
     };
   }),
 
   // Create real GitHub issue via API
-  createGithubIssue: publicQuery
+  createGithubIssue: authedQuery
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       if (!githubConfigured) {
         throw new Error(
           "GitHub not configured. Add GITHUB_PAT, GITHUB_REPO_OWNER, GITHUB_REPO_NAME to .env"
@@ -258,7 +206,7 @@ export const bugRouter = createRouter({
 
       const db = getDb();
       const bug = await db.query.bugReports.findFirst({
-        where: eq(bugReports.id, input.id),
+        where: and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)),
       });
       if (!bug) throw new Error("Bug not found");
 
@@ -271,18 +219,12 @@ export const bugRouter = createRouter({
         };
       }
 
-      const message = await db.query.messages.findFirst({
-        where: eq(messages.id, bug.messageId),
-      });
-      const parsed = await db.query.parsedResults.findFirst({
-        where: eq(parsedResults.id, bug.parsedResultId),
-      });
-      const repro = await db.query.reproductionSteps.findFirst({
-        where: eq(reproductionSteps.bugReportId, input.id),
-      });
+      const message = bug.messageId ? await db.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
+      const parsed = bug.parsedResultId ? await db.query.parsedResults.findFirst({ where: eq(parsedResults.id, bug.parsedResultId) }) : null;
+      const repro = await db.query.reproductionSteps.findFirst({ where: eq(reproductionSteps.bugReportId, input.id) });
 
       const body = buildGithubIssueBody({ bug, message, parsed, repro });
-      const labels = ["bug", bug.severity.toLowerCase(), bug.component];
+      const labels = ["bug", bug.severity.toLowerCase(), bug.component].filter(Boolean) as string[];
 
       const { number, url } = await createGitHubIssue({
         title: bug.title,
@@ -294,30 +236,24 @@ export const bugRouter = createRouter({
       await db
         .update(bugReports)
         .set({ githubIssueId: String(number), githubIssueUrl: url })
-        .where(eq(bugReports.id, input.id));
+        .where(and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)));
 
       return { issueNumber: number, url, alreadyExists: false };
     }),
 
   // Generate GitHub issue body (preview — no API call)
-  generateGithubBody: publicQuery
+  generateGithubBody: authedQuery
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = getDb();
       const bug = await db.query.bugReports.findFirst({
-        where: eq(bugReports.id, input.id),
+        where: and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)),
       });
       if (!bug) return null;
 
-      const message = await db.query.messages.findFirst({
-        where: eq(messages.id, bug.messageId),
-      });
-      const parsed = await db.query.parsedResults.findFirst({
-        where: eq(parsedResults.id, bug.parsedResultId),
-      });
-      const repro = await db.query.reproductionSteps.findFirst({
-        where: eq(reproductionSteps.bugReportId, input.id),
-      });
+      const message = bug.messageId ? await db.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
+      const parsed = bug.parsedResultId ? await db.query.parsedResults.findFirst({ where: eq(parsedResults.id, bug.parsedResultId) }) : null;
+      const repro = await db.query.reproductionSteps.findFirst({ where: eq(reproductionSteps.bugReportId, input.id) });
 
       const body = `## Bug Report
 **Source:** ${message?.source || "unknown"}${message?.channel ? ` #${message.channel}` : ""} | **Component:** ${bug.component} | **Severity:** ${bug.severity}
@@ -346,56 +282,54 @@ ${repro.errorLogSummary ? `### Error Log Summary\n${repro.errorLogSummary}` : ""
     }),
 
   // Update bug status manually
-  updateStatus: publicQuery
+  updateStatus: authedQuery
     .input(
       z.object({
         id: z.number(),
         status: z.enum(["open", "in_progress", "resolved", "closed"]),
-        resolvedAt: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const updateData: Record<string, unknown> = { status: input.status };
       if (input.status === "resolved" || input.status === "closed") {
-        const bug = await db.query.bugReports.findFirst({ where: eq(bugReports.id, input.id) });
+        const bug = await db.query.bugReports.findFirst({ where: and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)) });
         if (bug) {
           const created = new Date(bug.createdAt).getTime();
           updateData.resolvedAt = new Date();
           updateData.resolutionTime = Math.round((Date.now() - created) / 3600000); // hours
         }
       }
-      await db.update(bugReports).set(updateData).where(eq(bugReports.id, input.id));
+      await db.update(bugReports).set(updateData).where(and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)));
       return { ok: true };
     }),
 
   // Assign bug to a team member
-  assign: publicQuery
+  assign: authedQuery
     .input(z.object({ id: z.number(), assigneeHandle: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       await db
         .update(bugReports)
         .set({ assigneeHandle: input.assigneeHandle })
-        .where(eq(bugReports.id, input.id));
+        .where(and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId)));
       return { ok: true };
     }),
 
   // Sync GitHub issue state → auto-resolve bugs whose GH issue is closed
-  syncGithubStatus: publicQuery
+  syncGithubStatus: authedQuery
     .input(
       z.object({
-        // Optional: sync a single bug; if omitted, syncs all bugs with linked GH issues
         bugId: z.number().optional(),
       }).optional()
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       if (!githubConfigured) {
         throw new Error("GitHub not configured. Set GITHUB_PAT, GITHUB_REPO_OWNER, GITHUB_REPO_NAME in .env");
       }
 
       const db = getDb();
-      const conditions = [isNotNull(bugReports.githubIssueId)];
+      const conditions = [isNotNull(bugReports.githubIssueId), eq(bugReports.tenantId, ctx.tenantId)];
       if (input?.bugId) conditions.push(eq(bugReports.id, input.bugId));
 
       const linkedBugs = await db.query.bugReports.findMany({
@@ -425,10 +359,11 @@ ${repro.errorLogSummary ? `### Error Log Summary\n${repro.errorLogSummary}` : ""
             status: "resolved",
             resolvedAt: new Date(),
             resolutionTime: hoursOpen,
-          }).where(eq(bugReports.id, bug.id));
+          }).where(and(eq(bugReports.id, bug.id), eq(bugReports.tenantId, ctx.tenantId)));
 
           // Log to agent activities
           await db.insert(agentActivities).values({
+            tenantId: ctx.tenantId,
             agentName: "release",
             action: `Auto-resolved: GitHub issue #${issueNumber} was closed`,
             targetId: bug.id,
@@ -443,7 +378,7 @@ ${repro.errorLogSummary ? `### Error Log Summary\n${repro.errorLogSummary}` : ""
           await db.update(bugReports).set({
             status: "in_progress",
             resolvedAt: null,
-          }).where(eq(bugReports.id, bug.id));
+          }).where(and(eq(bugReports.id, bug.id), eq(bugReports.tenantId, ctx.tenantId)));
           action = "reopened";
         }
 

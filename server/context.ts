@@ -6,6 +6,7 @@ export type TrpcContext = {
   req: Request;
   resHeaders: Headers;
   user?: User;
+  tenantId?: number;
 };
 
 export async function createContext(
@@ -17,5 +18,13 @@ export async function createContext(
   } catch {
     // Authentication is optional here
   }
+  
+  const tenantHeader = opts.req.headers.get("x-tenant-id");
+  if (tenantHeader) {
+    ctx.tenantId = parseInt(tenantHeader, 10);
+  } else if (ctx.user && ctx.user.defaultTenantId) {
+    ctx.tenantId = ctx.user.defaultTenantId;
+  }
+  
   return ctx;
 }
