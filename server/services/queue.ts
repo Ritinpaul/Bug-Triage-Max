@@ -1,7 +1,6 @@
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
+import * as PgBossNamespace from "pg-boss";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PgBoss: any = _require("pg-boss");
+const PgBoss: any = (PgBossNamespace as any).default ?? PgBossNamespace;
 import { processMessage } from "./agent-service";
 import { getDb } from "../queries/connection";
 
