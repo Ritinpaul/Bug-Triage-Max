@@ -14,11 +14,12 @@ import { authenticateRequest } from "./kimi/auth";
 import { getDb } from "./queries/connection";
 import { bugReports } from "../db/schema";
 
+import { initQueue } from "./services/queue";
+
 const app = new Hono<{ Bindings: HttpBindings }>();
 
-// ── Initialize Background Queue ───────────────────────────────────────
-import { initQueue } from "./services/queue";
-await initQueue().catch(err => {
+// ── Initialize Background Queue (non-blocking on serverless) ─────────
+void initQueue().catch(err => {
   console.error("Failed to initialize queue:", err);
 });
 
