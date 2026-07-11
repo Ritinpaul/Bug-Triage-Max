@@ -96,12 +96,13 @@ export const releaseNotesRouter = createRouter({
         bugCount: z.number().int().min(0).default(0),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
 
       const [note] = await db
         .insert(releaseNotes)
         .values({
+          tenantId: ctx.tenantId,
           tagName: input.tagName,
           name: input.name,
           body: input.body,

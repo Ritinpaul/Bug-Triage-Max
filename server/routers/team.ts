@@ -7,10 +7,7 @@ import { eq, desc } from "drizzle-orm";
 export const teamRouter = createRouter({
   list: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    const items = await db.query.teamMembers.findMany({
-      where: eq(teamMembers.tenantId, ctx.tenantId),
-      orderBy: [desc(teamMembers.createdAt)],
-    });
+    const items = await db.select().from(teamMembers).where(eq(teamMembers.tenantId, ctx.tenantId)).orderBy(desc(teamMembers.createdAt));
     return items;
   }),
 
