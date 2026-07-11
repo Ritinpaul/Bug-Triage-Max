@@ -6,6 +6,11 @@ import { getDb } from "../queries/connection";
 let boss: any = null;
 
 export async function initQueue() {
+  if (process.env.VERCEL) {
+    console.log("[Queue] Skipping pg-boss initialization on Vercel");
+    return;
+  }
+
   const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("Cannot start pg-boss: missing database connection string.");
@@ -34,6 +39,13 @@ export async function initQueue() {
 }
 
 export async function enqueueMessageProcessing(messageId: number) {
+  if (process.env.VERCEL) {
+    console.log(`[Queue] Processing message ${messageId} inline on Vercel`);
+    // Process async but don't await so the webhook can return immediately (Note: Vercel might kill it early if no waitUntil is used, but for now we try this)
+    processMessage(messageId).catch(err => console.error(err));
+    return "inline";
+  }
+
   if (!boss) {
     throw new Error("pg-boss is not initialized");
   }
