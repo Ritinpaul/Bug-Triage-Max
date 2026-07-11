@@ -1,8 +1,12 @@
-import PgBoss from "pg-boss";
+// pg-boss v12 ships as CJS; esbuild/Vite need this import style to get the class
+import PgBossModule from "pg-boss";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PgBoss = (PgBossModule as any).default ?? PgBossModule;
 import { processMessage } from "./agent-service";
 import { getDb } from "../queries/connection";
 
-let boss: PgBoss | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let boss: any = null;
 
 export async function initQueue() {
   const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;

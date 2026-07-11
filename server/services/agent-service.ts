@@ -54,7 +54,15 @@ export async function runParserAgent(messageId: number) {
   const db = getDb();
   const startTime = Date.now();
 
+  // Fetch tenantId early so we can attach it to all activity inserts
+  const earlyMessage = await db.query.messages.findFirst({
+    where: eq(messages.id, messageId),
+  });
+  if (!earlyMessage) throw new Error("Message not found");
+  const tenantId = earlyMessage.tenantId;
+
   await db.insert(agentActivities).values({
+    tenantId,
     agentName: "parser",
     action: geminiAvailable
       ? "Analyzing with Gemini AI..."
@@ -64,10 +72,7 @@ export async function runParserAgent(messageId: number) {
     status: "running",
   });
 
-  const message = await db.query.messages.findFirst({
-    where: eq(messages.id, messageId),
-  });
-  if (!message) throw new Error("Message not found");
+  const message = earlyMessage;
 
   // Try Gemini first, fall back to pattern matching
   if (!geminiAvailable) {
@@ -117,6 +122,7 @@ export async function runParserAgent(messageId: number) {
 
   const duration = Date.now() - startTime;
   await db.insert(agentActivities).values({
+    tenantId,
     agentName: "parser",
     action: `[${usedGemini ? "Gemini" : "Pattern"}] Intent: ${intent}, Component: ${component}, Severity: ${severityLabel}`,
     targetId: messageId,
@@ -176,14 +182,6 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
   const db = getDb();
   const startTime = Date.now();
 
-  await db.insert(agentActivities).values({
-    agentName: "triage",
-    action: "Finding similar bugs and calculating priority",
-    targetId: messageId,
-    targetType: "message",
-    status: "running",
-  });
-
   const parsed = await db.query.parsedResults.findFirst({
     where: eq(parsedResults.id, parsedResultId),
   });
@@ -191,6 +189,15 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
     where: eq(messages.id, messageId),
   });
   if (!parsed || !message) throw new Error("Data not found");
+
+  await db.insert(agentActivities).values({
+    tenantId: message.tenantId,
+    agentName: "triage",
+    action: "Finding similar bugs and calculating priority",
+    targetId: messageId,
+    targetType: "message",
+    status: "running",
+  });
 
   // Get current message embedding (stored in embedding column)
   let currentEmbedding: number[] | null = null;
@@ -274,6 +281,7 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
   const title = generateTitle(message.rawContent, parsed.component);
 
   const [bug] = await db.insert(bugReports).values({
+    tenantId: message.tenantId,
     messageId,
     parsedResultId,
     title,
@@ -288,6 +296,7 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
 
   for (const sim of top3) {
     await db.insert(similarBugMatches).values({
+      tenantId: message.tenantId,
       bugReportId: bug.id,
       similarBugId: sim.bugId,
       similarityScore: sim.score,
@@ -300,6 +309,7 @@ export async function runTriageAgent(messageId: number, parsedResultId: number) 
   const duration = Date.now() - startTime;
   const vectorUsed = currentEmbedding !== null;
   await db.insert(agentActivities).values({
+    tenantId: message.tenantId,
     agentName: "triage",
     action: `[${vectorUsed ? "Vector" : "Keyword"}] Priority: ${priorityLabel} (${priorityScore}/100), Assigned: ${assigneeHandle}, ${top3.length} similar bugs found`,
     targetId: bug.id,
@@ -317,7 +327,13 @@ export async function runReproductionAgent(bugId: number) {
   const db = getDb();
   const startTime = Date.now();
 
+  const bug = await db.query.bugReports.findFirst({
+    where: eq(bugReports.id, bugId),
+  });
+  if (!bug) throw new Error("Bug not found");
+
   await db.insert(agentActivities).values({
+    tenantId: bug.tenantId,
     agentName: "reproduction",
     action: geminiAvailable
       ? "Generating reproduction steps with Gemini AI..."
@@ -326,11 +342,6 @@ export async function runReproductionAgent(bugId: number) {
     targetType: "bug_report",
     status: "running",
   });
-
-  const bug = await db.query.bugReports.findFirst({
-    where: eq(bugReports.id, bugId),
-  });
-  if (!bug) throw new Error("Bug not found");
 
   const message = await db.query.messages.findFirst({
     where: eq(messages.id, bug.messageId),
@@ -372,6 +383,7 @@ export async function runReproductionAgent(bugId: number) {
   }
 
   await db.insert(reproductionSteps).values({
+    tenantId: bug.tenantId,
     bugReportId: bugId,
     steps,
     expectedBehavior: expected,
@@ -385,6 +397,7 @@ export async function runReproductionAgent(bugId: number) {
 
   const duration = Date.now() - startTime;
   await db.insert(agentActivities).values({
+    tenantId: bug.tenantId,
     agentName: "reproduction",
     action: `[${usedGemini ? "Gemini" : "Pattern"}] Generated ${steps.length} reproduction steps`,
     targetId: bugId,
@@ -520,7 +533,9 @@ export async function processMessage(messageId: number) {
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     const db = getDb();
+    const failMsg = await db.query.messages.findFirst({ where: eq(messages.id, messageId) });
     await db.insert(agentActivities).values({
+      tenantId: failMsg?.tenantId ?? 1,
       agentName: "parser",
       action: `Pipeline failed: ${errMsg}`,
       targetId: messageId,
