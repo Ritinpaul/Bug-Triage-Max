@@ -8690,12 +8690,25 @@ __export(schema_exports, {
   tenantMembers: () => tenantMembers,
   tenants: () => tenants,
   usageMetrics: () => usageMetrics,
-  users: () => users
+  users: () => users,
+  vector: () => vector2
 });
-var roleEnum, sourceEnum, messageStatusEnum, intentEnum, componentEnum, severityEnum, bugStatusEnum, agentNameEnum, agentTargetEnum, agentStatusEnum, integrationServiceEnum, integrationStatusValueEnum, releaseNoteStatusEnum, tenants, tenantMembers, subscriptions, usageMetrics, users, teamMembers, messages, parsedResults, bugReports, similarBugMatches, reproductionSteps, agentActivities, integrationStatus, analyticsSnapshots, releaseNotes;
+var vector2, roleEnum, sourceEnum, messageStatusEnum, intentEnum, componentEnum, severityEnum, bugStatusEnum, agentNameEnum, agentTargetEnum, agentStatusEnum, integrationServiceEnum, integrationStatusValueEnum, releaseNoteStatusEnum, tenants, tenantMembers, subscriptions, usageMetrics, users, teamMembers, messages, parsedResults, bugReports, similarBugMatches, reproductionSteps, agentActivities, integrationStatus, analyticsSnapshots, releaseNotes;
 var init_schema2 = __esm({
   "db/schema.ts"() {
     init_pg_core();
+    vector2 = customType({
+      dataType() {
+        return "vector(768)";
+      },
+      toDriver(value) {
+        return `[${value.join(",")}]`;
+      },
+      fromDriver(value) {
+        if (typeof value === "string") return JSON.parse(value);
+        return value;
+      }
+    });
     roleEnum = pgEnum("role", ["user", "admin"]);
     sourceEnum = pgEnum("source", ["slack", "email", "form"]);
     messageStatusEnum = pgEnum("message_status", ["pending", "parsed", "triaged", "reproduced", "resolved"]);
@@ -8812,6 +8825,7 @@ var init_schema2 = __esm({
       overallConfidence: real("overall_confidence").notNull(),
       keywords: json("keywords").$type(),
       entities: json("entities").$type(),
+      embedding: vector2("embedding"),
       flaggedForReview: integer("flagged_for_review").default(0).notNull(),
       createdAt: timestamp("created_at").defaultNow().notNull()
     }, (table) => [
@@ -8933,7 +8947,7 @@ var init_schema2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/Error.js
+// node_modules/stripe/esm/Error.js
 var Error_exports = {};
 __export(Error_exports, {
   RateLimitError: () => RateLimitError,
@@ -8961,7 +8975,7 @@ __export(Error_exports, {
 });
 var generateV1Error, generateOAuthError, generateV2Error, StripeError, StripeCardError, StripeInvalidRequestError, StripeAPIError, StripeAuthenticationError, StripePermissionError, StripeRateLimitError, StripeConnectionError, StripeSignatureVerificationError, StripeIdempotencyError, StripeOAuthError, StripeInvalidGrantError, StripeInvalidClientError, StripeOAuthInvalidRequestError, StripeInvalidScopeError, StripeUnsupportedGrantTypeError, StripeUnsupportedResponseTypeError, RateLimitError, TemporarySessionExpiredError;
 var init_Error = __esm({
-  "../node_modules/stripe/esm/Error.js"() {
+  "node_modules/stripe/esm/Error.js"() {
     generateV1Error = (rawStripeError) => {
       const statusCode = rawStripeError.statusCode;
       if (statusCode === 429 || statusCode === 400 && rawStripeError.code === "rate_limit") {
@@ -9140,10 +9154,10 @@ var init_Error = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/net/HttpClient.js
+// node_modules/stripe/esm/net/HttpClient.js
 var HttpClient, HttpClientResponse;
 var init_HttpClient = __esm({
-  "../node_modules/stripe/esm/net/HttpClient.js"() {
+  "node_modules/stripe/esm/net/HttpClient.js"() {
     HttpClient = class _HttpClient {
       /** The client name used for diagnostics. */
       getClientName() {
@@ -9185,10 +9199,10 @@ var init_HttpClient = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/Types.js
+// node_modules/stripe/esm/Types.js
 var DEFAULT_BASE_ADDRESSES;
 var init_Types = __esm({
-  "../node_modules/stripe/esm/Types.js"() {
+  "node_modules/stripe/esm/Types.js"() {
     DEFAULT_BASE_ADDRESSES = {
       api: "api.stripe.com",
       files: "files.stripe.com",
@@ -9198,7 +9212,7 @@ var init_Types = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/utils.js
+// node_modules/stripe/esm/utils.js
 function queryStringifyRequestData(data) {
   return stringifyRequestData(data);
 }
@@ -9425,7 +9439,7 @@ ${callerFrames}`;
 }
 var makeURLInterpolator, AI_AGENTS, CALL_SITE_MARKER;
 var init_utils5 = __esm({
-  "../node_modules/stripe/esm/utils.js"() {
+  "node_modules/stripe/esm/utils.js"() {
     init_Types();
     makeURLInterpolator = /* @__PURE__ */ (() => {
       const rc = {
@@ -9465,10 +9479,10 @@ var init_utils5 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/RequestSender.js
+// node_modules/stripe/esm/RequestSender.js
 var RequestSender;
 var init_RequestSender = __esm({
-  "../node_modules/stripe/esm/RequestSender.js"() {
+  "node_modules/stripe/esm/RequestSender.js"() {
     init_Error();
     init_HttpClient();
     init_utils5();
@@ -9855,10 +9869,10 @@ var init_RequestSender = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/Decimal.js
+// node_modules/stripe/esm/Decimal.js
 var ROUNDING_PRESETS, PLAIN_NOTATION_DIGIT_LIMIT, MAX_EXPONENT, DecimalImpl, Decimal;
 var init_Decimal = __esm({
-  "../node_modules/stripe/esm/Decimal.js"() {
+  "node_modules/stripe/esm/Decimal.js"() {
     ROUNDING_PRESETS = {
       "ubb-usage-count": { mode: "significant-figures", value: 15 },
       "v1-api": { mode: "decimal-places", value: 12 }
@@ -10564,10 +10578,10 @@ var init_Decimal = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/V2Coercion.js
+// node_modules/stripe/esm/V2Coercion.js
 var coerceV2RequestData, coerceV2ResponseData;
 var init_V2Coercion = __esm({
-  "../node_modules/stripe/esm/V2Coercion.js"() {
+  "node_modules/stripe/esm/V2Coercion.js"() {
     init_Decimal();
     coerceV2RequestData = (data, schema) => {
       if (data == null) {
@@ -10651,7 +10665,7 @@ var init_V2Coercion = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/autoPagination.js
+// node_modules/stripe/esm/autoPagination.js
 function getAsyncIteratorSymbol() {
   if (typeof Symbol !== "undefined" && Symbol.asyncIterator) {
     return Symbol.asyncIterator;
@@ -10772,7 +10786,7 @@ function wrapAsyncIteratorWithCallback(asyncIteratorNext, onItem) {
 }
 var V1Iterator, V1ListIterator, V1SearchIterator, V2ListIterator, makeAutoPaginationMethods, makeAutoPaginationMethodsFromIterator;
 var init_autoPagination = __esm({
-  "../node_modules/stripe/esm/autoPagination.js"() {
+  "node_modules/stripe/esm/autoPagination.js"() {
     init_utils5();
     V1Iterator = class {
       constructor(firstPagePromise, params, options, method, path2, spec, stripeResource) {
@@ -10941,10 +10955,10 @@ var init_autoPagination = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/StripeResource.js
+// node_modules/stripe/esm/StripeResource.js
 var StripeResource;
 var init_StripeResource = __esm({
-  "../node_modules/stripe/esm/StripeResource.js"() {
+  "node_modules/stripe/esm/StripeResource.js"() {
     init_utils5();
     init_V2Coercion();
     init_autoPagination();
@@ -11029,10 +11043,10 @@ var init_StripeResource = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/StripeContext.js
+// node_modules/stripe/esm/StripeContext.js
 var StripeContext;
 var init_StripeContext = __esm({
-  "../node_modules/stripe/esm/StripeContext.js"() {
+  "node_modules/stripe/esm/StripeContext.js"() {
     StripeContext = class _StripeContext {
       /**
        * Creates a new StripeContext with the given segments.
@@ -11084,10 +11098,10 @@ var init_StripeContext = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/crypto/CryptoProvider.js
+// node_modules/stripe/esm/crypto/CryptoProvider.js
 var CryptoProvider, CryptoProviderOnlySupportsAsyncError;
 var init_CryptoProvider = __esm({
-  "../node_modules/stripe/esm/crypto/CryptoProvider.js"() {
+  "node_modules/stripe/esm/crypto/CryptoProvider.js"() {
     CryptoProvider = class {
       /**
        * Computes a SHA-256 HMAC given a secret and a payload (encoded in UTF-8).
@@ -11126,11 +11140,11 @@ var init_CryptoProvider = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/crypto/NodeCryptoProvider.js
+// node_modules/stripe/esm/crypto/NodeCryptoProvider.js
 import * as crypto4 from "crypto";
 var NodeCryptoProvider;
 var init_NodeCryptoProvider = __esm({
-  "../node_modules/stripe/esm/crypto/NodeCryptoProvider.js"() {
+  "node_modules/stripe/esm/crypto/NodeCryptoProvider.js"() {
     init_CryptoProvider();
     NodeCryptoProvider = class extends CryptoProvider {
       /** @override */
@@ -11150,12 +11164,12 @@ var init_NodeCryptoProvider = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/net/NodeHttpClient.js
+// node_modules/stripe/esm/net/NodeHttpClient.js
 import * as http_ from "http";
 import * as https_ from "https";
 var http, https, defaultHttpAgent, defaultHttpsAgent, NodeHttpClient, NodeHttpClientResponse;
 var init_NodeHttpClient = __esm({
-  "../node_modules/stripe/esm/net/NodeHttpClient.js"() {
+  "node_modules/stripe/esm/net/NodeHttpClient.js"() {
     init_HttpClient();
     http = http_.default || http_;
     https = https_.default || https_;
@@ -11245,10 +11259,10 @@ var init_NodeHttpClient = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/net/FetchHttpClient.js
+// node_modules/stripe/esm/net/FetchHttpClient.js
 var FetchHttpClient, FetchHttpClientResponse;
 var init_FetchHttpClient = __esm({
-  "../node_modules/stripe/esm/net/FetchHttpClient.js"() {
+  "node_modules/stripe/esm/net/FetchHttpClient.js"() {
     init_utils5();
     init_HttpClient();
     FetchHttpClient = class _FetchHttpClient extends HttpClient {
@@ -11367,10 +11381,10 @@ var init_FetchHttpClient = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/crypto/SubtleCryptoProvider.js
+// node_modules/stripe/esm/crypto/SubtleCryptoProvider.js
 var SubtleCryptoProvider, byteHexMapping;
 var init_SubtleCryptoProvider = __esm({
-  "../node_modules/stripe/esm/crypto/SubtleCryptoProvider.js"() {
+  "node_modules/stripe/esm/crypto/SubtleCryptoProvider.js"() {
     init_CryptoProvider();
     SubtleCryptoProvider = class extends CryptoProvider {
       constructor(subtleCrypto) {
@@ -11408,10 +11422,10 @@ var init_SubtleCryptoProvider = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/platform/PlatformFunctions.js
+// node_modules/stripe/esm/platform/PlatformFunctions.js
 var PlatformFunctions;
 var init_PlatformFunctions = __esm({
-  "../node_modules/stripe/esm/platform/PlatformFunctions.js"() {
+  "node_modules/stripe/esm/platform/PlatformFunctions.js"() {
     init_FetchHttpClient();
     init_SubtleCryptoProvider();
     PlatformFunctions = class {
@@ -11526,13 +11540,13 @@ var init_PlatformFunctions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/platform/NodePlatformFunctions.js
+// node_modules/stripe/esm/platform/NodePlatformFunctions.js
 import * as crypto5 from "crypto";
 import * as os2 from "os";
 import { EventEmitter } from "events";
 var StreamProcessingError, NodePlatformFunctions;
 var init_NodePlatformFunctions = __esm({
-  "../node_modules/stripe/esm/platform/NodePlatformFunctions.js"() {
+  "node_modules/stripe/esm/platform/NodePlatformFunctions.js"() {
     init_NodeCryptoProvider();
     init_NodeHttpClient();
     init_PlatformFunctions();
@@ -11655,7 +11669,7 @@ var init_NodePlatformFunctions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/Webhooks.js
+// node_modules/stripe/esm/Webhooks.js
 function createWebhooks(platformFunctions) {
   const Webhook = {
     DEFAULT_TOLERANCE: 300,
@@ -11844,21 +11858,21 @@ function createWebhooks(platformFunctions) {
   return Webhook;
 }
 var init_Webhooks = __esm({
-  "../node_modules/stripe/esm/Webhooks.js"() {
+  "node_modules/stripe/esm/Webhooks.js"() {
     init_Error();
     init_CryptoProvider();
   }
 });
 
-// ../node_modules/stripe/esm/apiVersion.js
+// node_modules/stripe/esm/apiVersion.js
 var ApiVersion;
 var init_apiVersion = __esm({
-  "../node_modules/stripe/esm/apiVersion.js"() {
+  "node_modules/stripe/esm/apiVersion.js"() {
     ApiVersion = "2026-06-24.dahlia";
   }
 });
 
-// ../node_modules/stripe/esm/ResourceNamespace.js
+// node_modules/stripe/esm/ResourceNamespace.js
 function ResourceNamespace(stripe, resources) {
   for (const name in resources) {
     if (!Object.prototype.hasOwnProperty.call(resources, name)) {
@@ -11875,14 +11889,14 @@ function resourceNamespace(namespace, resources) {
   };
 }
 var init_ResourceNamespace = __esm({
-  "../node_modules/stripe/esm/ResourceNamespace.js"() {
+  "node_modules/stripe/esm/ResourceNamespace.js"() {
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/AccountLinks.js
+// node_modules/stripe/esm/resources/V2/Core/AccountLinks.js
 var AccountLinkResource;
 var init_AccountLinks = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/AccountLinks.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/AccountLinks.js"() {
     init_StripeResource();
     AccountLinkResource = class extends StripeResource {
       /**
@@ -11896,10 +11910,10 @@ var init_AccountLinks = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/AccountTokens.js
+// node_modules/stripe/esm/resources/V2/Core/AccountTokens.js
 var AccountTokenResource;
 var init_AccountTokens = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/AccountTokens.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/AccountTokens.js"() {
     init_StripeResource();
     AccountTokenResource = class extends StripeResource {
       /**
@@ -11944,10 +11958,10 @@ var init_AccountTokens = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/FinancialConnections/Accounts.js
+// node_modules/stripe/esm/resources/FinancialConnections/Accounts.js
 var AccountResource;
 var init_Accounts = __esm({
-  "../node_modules/stripe/esm/resources/FinancialConnections/Accounts.js"() {
+  "node_modules/stripe/esm/resources/FinancialConnections/Accounts.js"() {
     init_StripeResource();
     AccountResource = class extends StripeResource {
       /**
@@ -12000,10 +12014,10 @@ var init_Accounts = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/Accounts/Persons.js
+// node_modules/stripe/esm/resources/V2/Core/Accounts/Persons.js
 var PersonResource;
 var init_Persons = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/Accounts/Persons.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/Accounts/Persons.js"() {
     init_StripeResource();
     PersonResource = class extends StripeResource {
       /**
@@ -12112,10 +12126,10 @@ var init_Persons = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/Accounts/PersonTokens.js
+// node_modules/stripe/esm/resources/V2/Core/Accounts/PersonTokens.js
 var PersonTokenResource;
 var init_PersonTokens = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/Accounts/PersonTokens.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/Accounts/PersonTokens.js"() {
     init_StripeResource();
     PersonTokenResource = class extends StripeResource {
       /**
@@ -12147,10 +12161,10 @@ var init_PersonTokens = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/Accounts.js
+// node_modules/stripe/esm/resources/V2/Core/Accounts.js
 var AccountResource2;
 var init_Accounts2 = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/Accounts.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/Accounts.js"() {
     init_StripeResource();
     init_Persons();
     init_PersonTokens();
@@ -12347,10 +12361,10 @@ var init_Accounts2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js
+// node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js
 var ActiveEntitlementResource;
 var init_ActiveEntitlements = __esm({
-  "../node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js"() {
+  "node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js"() {
     init_StripeResource();
     ActiveEntitlementResource = class extends StripeResource {
       /**
@@ -12371,10 +12385,10 @@ var init_ActiveEntitlements = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/Alerts.js
+// node_modules/stripe/esm/resources/Billing/Alerts.js
 var AlertResource;
 var init_Alerts = __esm({
-  "../node_modules/stripe/esm/resources/Billing/Alerts.js"() {
+  "node_modules/stripe/esm/resources/Billing/Alerts.js"() {
     init_StripeResource();
     AlertResource = class extends StripeResource {
       /**
@@ -12419,10 +12433,10 @@ var init_Alerts = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/Associations.js
+// node_modules/stripe/esm/resources/Tax/Associations.js
 var AssociationResource;
 var init_Associations = __esm({
-  "../node_modules/stripe/esm/resources/Tax/Associations.js"() {
+  "node_modules/stripe/esm/resources/Tax/Associations.js"() {
     init_StripeResource();
     AssociationResource = class extends StripeResource {
       /**
@@ -12435,10 +12449,10 @@ var init_Associations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Authorizations.js
+// node_modules/stripe/esm/resources/Issuing/Authorizations.js
 var AuthorizationResource;
 var init_Authorizations = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Authorizations.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Authorizations.js"() {
     init_StripeResource();
     AuthorizationResource = class extends StripeResource {
       /**
@@ -13311,10 +13325,10 @@ var init_Authorizations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js
+// node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js
 var AuthorizationResource2;
 var init_Authorizations2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js"() {
     init_StripeResource();
     AuthorizationResource2 = class extends StripeResource {
       /**
@@ -14631,10 +14645,10 @@ var init_Authorizations2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/Calculations.js
+// node_modules/stripe/esm/resources/Tax/Calculations.js
 var CalculationResource;
 var init_Calculations = __esm({
-  "../node_modules/stripe/esm/resources/Tax/Calculations.js"() {
+  "node_modules/stripe/esm/resources/Tax/Calculations.js"() {
     init_StripeResource();
     CalculationResource = class extends StripeResource {
       /**
@@ -14661,10 +14675,10 @@ var init_Calculations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Cardholders.js
+// node_modules/stripe/esm/resources/Issuing/Cardholders.js
 var CardholderResource;
 var init_Cardholders = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Cardholders.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Cardholders.js"() {
     init_StripeResource();
     CardholderResource = class extends StripeResource {
       /**
@@ -14697,10 +14711,10 @@ var init_Cardholders = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Cards.js
+// node_modules/stripe/esm/resources/Issuing/Cards.js
 var CardResource;
 var init_Cards = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Cards.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Cards.js"() {
     init_StripeResource();
     CardResource = class extends StripeResource {
       /**
@@ -14733,10 +14747,10 @@ var init_Cards = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js
+// node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js
 var CardResource2;
 var init_Cards2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js"() {
     init_StripeResource();
     CardResource2 = class extends StripeResource {
       /**
@@ -14773,10 +14787,10 @@ var init_Cards2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/BillingPortal/Configurations.js
+// node_modules/stripe/esm/resources/BillingPortal/Configurations.js
 var ConfigurationResource;
 var init_Configurations = __esm({
-  "../node_modules/stripe/esm/resources/BillingPortal/Configurations.js"() {
+  "node_modules/stripe/esm/resources/BillingPortal/Configurations.js"() {
     init_StripeResource();
     ConfigurationResource = class extends StripeResource {
       /**
@@ -14809,10 +14823,10 @@ var init_Configurations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/Configurations.js
+// node_modules/stripe/esm/resources/Terminal/Configurations.js
 var ConfigurationResource2;
 var init_Configurations2 = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/Configurations.js"() {
+  "node_modules/stripe/esm/resources/Terminal/Configurations.js"() {
     init_StripeResource();
     ConfigurationResource2 = class extends StripeResource {
       /**
@@ -14851,10 +14865,10 @@ var init_Configurations2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js
+// node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js
 var ConfirmationTokenResource;
 var init_ConfirmationTokens = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js"() {
     init_StripeResource();
     ConfirmationTokenResource = class extends StripeResource {
       /**
@@ -14867,10 +14881,10 @@ var init_ConfirmationTokens = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js
+// node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js
 var ConnectionTokenResource;
 var init_ConnectionTokens = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js"() {
+  "node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js"() {
     init_StripeResource();
     ConnectionTokenResource = class extends StripeResource {
       /**
@@ -14883,10 +14897,10 @@ var init_ConnectionTokens = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/CreditBalanceSummary.js
+// node_modules/stripe/esm/resources/Billing/CreditBalanceSummary.js
 var CreditBalanceSummaryResource;
 var init_CreditBalanceSummary = __esm({
-  "../node_modules/stripe/esm/resources/Billing/CreditBalanceSummary.js"() {
+  "node_modules/stripe/esm/resources/Billing/CreditBalanceSummary.js"() {
     init_StripeResource();
     CreditBalanceSummaryResource = class extends StripeResource {
       /**
@@ -14899,10 +14913,10 @@ var init_CreditBalanceSummary = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/CreditBalanceTransactions.js
+// node_modules/stripe/esm/resources/Billing/CreditBalanceTransactions.js
 var CreditBalanceTransactionResource;
 var init_CreditBalanceTransactions = __esm({
-  "../node_modules/stripe/esm/resources/Billing/CreditBalanceTransactions.js"() {
+  "node_modules/stripe/esm/resources/Billing/CreditBalanceTransactions.js"() {
     init_StripeResource();
     CreditBalanceTransactionResource = class extends StripeResource {
       /**
@@ -14923,10 +14937,10 @@ var init_CreditBalanceTransactions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/CreditGrants.js
+// node_modules/stripe/esm/resources/Billing/CreditGrants.js
 var CreditGrantResource;
 var init_CreditGrants = __esm({
-  "../node_modules/stripe/esm/resources/Billing/CreditGrants.js"() {
+  "node_modules/stripe/esm/resources/Billing/CreditGrants.js"() {
     init_StripeResource();
     CreditGrantResource = class extends StripeResource {
       /**
@@ -14971,10 +14985,10 @@ var init_CreditGrants = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/CreditReversals.js
+// node_modules/stripe/esm/resources/Treasury/CreditReversals.js
 var CreditReversalResource;
 var init_CreditReversals = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/CreditReversals.js"() {
+  "node_modules/stripe/esm/resources/Treasury/CreditReversals.js"() {
     init_StripeResource();
     CreditReversalResource = class extends StripeResource {
       /**
@@ -15001,10 +15015,10 @@ var init_CreditReversals = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Customers.js
+// node_modules/stripe/esm/resources/TestHelpers/Customers.js
 var CustomerResource;
 var init_Customers = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Customers.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Customers.js"() {
     init_StripeResource();
     CustomerResource = class extends StripeResource {
       /**
@@ -15017,10 +15031,10 @@ var init_Customers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/DebitReversals.js
+// node_modules/stripe/esm/resources/Treasury/DebitReversals.js
 var DebitReversalResource;
 var init_DebitReversals = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/DebitReversals.js"() {
+  "node_modules/stripe/esm/resources/Treasury/DebitReversals.js"() {
     init_StripeResource();
     DebitReversalResource = class extends StripeResource {
       /**
@@ -15047,10 +15061,10 @@ var init_DebitReversals = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Disputes.js
+// node_modules/stripe/esm/resources/Issuing/Disputes.js
 var DisputeResource;
 var init_Disputes = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Disputes.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Disputes.js"() {
     init_StripeResource();
     DisputeResource = class extends StripeResource {
       /**
@@ -15089,10 +15103,10 @@ var init_Disputes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js
+// node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js
 var EarlyFraudWarningResource;
 var init_EarlyFraudWarnings = __esm({
-  "../node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js"() {
+  "node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js"() {
     init_StripeResource();
     EarlyFraudWarningResource = class extends StripeResource {
       /**
@@ -15115,10 +15129,10 @@ var init_EarlyFraudWarnings = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/EventDestinations.js
+// node_modules/stripe/esm/resources/V2/Core/EventDestinations.js
 var EventDestinationResource;
 var init_EventDestinations = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/EventDestinations.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/EventDestinations.js"() {
     init_StripeResource();
     EventDestinationResource = class extends StripeResource {
       /**
@@ -15175,10 +15189,10 @@ var init_EventDestinations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/Events.js
+// node_modules/stripe/esm/resources/V2/Core/Events.js
 var EventResource;
 var init_Events = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/Events.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/Events.js"() {
     init_StripeResource();
     EventResource = class extends StripeResource {
       /**
@@ -15235,10 +15249,10 @@ var init_Events = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Entitlements/Features.js
+// node_modules/stripe/esm/resources/Entitlements/Features.js
 var FeatureResource;
 var init_Features = __esm({
-  "../node_modules/stripe/esm/resources/Entitlements/Features.js"() {
+  "node_modules/stripe/esm/resources/Entitlements/Features.js"() {
     init_StripeResource();
     FeatureResource = class extends StripeResource {
       /**
@@ -15271,10 +15285,10 @@ var init_Features = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js
+// node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js
 var FinancialAccountResource;
 var init_FinancialAccounts = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js"() {
+  "node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js"() {
     init_StripeResource();
     FinancialAccountResource = class extends StripeResource {
       /**
@@ -15325,10 +15339,10 @@ var init_FinancialAccounts = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/Imports.js
+// node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/Imports.js
 var ImportResource;
 var init_Imports = __esm({
-  "../node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/Imports.js"() {
+  "node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/Imports.js"() {
     init_StripeResource();
     ImportResource = class extends StripeResource {
       /**
@@ -15482,10 +15496,10 @@ var init_Imports = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js
 var InboundTransferResource;
 var init_InboundTransfers = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js"() {
     init_StripeResource();
     InboundTransferResource = class extends StripeResource {
       /**
@@ -15510,10 +15524,10 @@ var init_InboundTransfers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/InboundTransfers.js
+// node_modules/stripe/esm/resources/Treasury/InboundTransfers.js
 var InboundTransferResource2;
 var init_InboundTransfers2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/InboundTransfers.js"() {
+  "node_modules/stripe/esm/resources/Treasury/InboundTransfers.js"() {
     init_StripeResource();
     InboundTransferResource2 = class extends StripeResource {
       /**
@@ -15546,10 +15560,10 @@ var init_InboundTransfers2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/Locations.js
+// node_modules/stripe/esm/resources/Terminal/Locations.js
 var LocationResource;
 var init_Locations = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/Locations.js"() {
+  "node_modules/stripe/esm/resources/Terminal/Locations.js"() {
     init_StripeResource();
     LocationResource = class extends StripeResource {
       /**
@@ -15589,10 +15603,10 @@ var init_Locations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js
+// node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js
 var MeterEventAdjustmentResource;
 var init_MeterEventAdjustments = __esm({
-  "../node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js"() {
+  "node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js"() {
     init_StripeResource();
     MeterEventAdjustmentResource = class extends StripeResource {
       /**
@@ -15605,10 +15619,10 @@ var init_MeterEventAdjustments = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Billing/MeterEventAdjustments.js
+// node_modules/stripe/esm/resources/V2/Billing/MeterEventAdjustments.js
 var MeterEventAdjustmentResource2;
 var init_MeterEventAdjustments2 = __esm({
-  "../node_modules/stripe/esm/resources/V2/Billing/MeterEventAdjustments.js"() {
+  "node_modules/stripe/esm/resources/V2/Billing/MeterEventAdjustments.js"() {
     init_StripeResource();
     MeterEventAdjustmentResource2 = class extends StripeResource {
       /**
@@ -15621,10 +15635,10 @@ var init_MeterEventAdjustments2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Billing/MeterEventSession.js
+// node_modules/stripe/esm/resources/V2/Billing/MeterEventSession.js
 var MeterEventSessionResource;
 var init_MeterEventSession = __esm({
-  "../node_modules/stripe/esm/resources/V2/Billing/MeterEventSession.js"() {
+  "node_modules/stripe/esm/resources/V2/Billing/MeterEventSession.js"() {
     init_StripeResource();
     MeterEventSessionResource = class extends StripeResource {
       /**
@@ -15637,10 +15651,10 @@ var init_MeterEventSession = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Billing/MeterEventStream.js
+// node_modules/stripe/esm/resources/V2/Billing/MeterEventStream.js
 var MeterEventStreamResource;
 var init_MeterEventStream = __esm({
-  "../node_modules/stripe/esm/resources/V2/Billing/MeterEventStream.js"() {
+  "node_modules/stripe/esm/resources/V2/Billing/MeterEventStream.js"() {
     init_StripeResource();
     MeterEventStreamResource = class extends StripeResource {
       /**
@@ -15656,10 +15670,10 @@ var init_MeterEventStream = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/MeterEvents.js
+// node_modules/stripe/esm/resources/Billing/MeterEvents.js
 var MeterEventResource;
 var init_MeterEvents = __esm({
-  "../node_modules/stripe/esm/resources/Billing/MeterEvents.js"() {
+  "node_modules/stripe/esm/resources/Billing/MeterEvents.js"() {
     init_StripeResource();
     MeterEventResource = class extends StripeResource {
       /**
@@ -15672,10 +15686,10 @@ var init_MeterEvents = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Billing/MeterEvents.js
+// node_modules/stripe/esm/resources/V2/Billing/MeterEvents.js
 var MeterEventResource2;
 var init_MeterEvents2 = __esm({
-  "../node_modules/stripe/esm/resources/V2/Billing/MeterEvents.js"() {
+  "node_modules/stripe/esm/resources/V2/Billing/MeterEvents.js"() {
     init_StripeResource();
     MeterEventResource2 = class extends StripeResource {
       /**
@@ -15688,10 +15702,10 @@ var init_MeterEvents2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/Meters.js
+// node_modules/stripe/esm/resources/Billing/Meters.js
 var MeterResource;
 var init_Meters = __esm({
-  "../node_modules/stripe/esm/resources/Billing/Meters.js"() {
+  "node_modules/stripe/esm/resources/Billing/Meters.js"() {
     init_StripeResource();
     MeterResource = class extends StripeResource {
       /**
@@ -15744,10 +15758,10 @@ var init_Meters = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/OnboardingLinks.js
+// node_modules/stripe/esm/resources/Terminal/OnboardingLinks.js
 var OnboardingLinkResource;
 var init_OnboardingLinks = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/OnboardingLinks.js"() {
+  "node_modules/stripe/esm/resources/Terminal/OnboardingLinks.js"() {
     init_StripeResource();
     OnboardingLinkResource = class extends StripeResource {
       /**
@@ -15760,10 +15774,10 @@ var init_OnboardingLinks = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Climate/Orders.js
+// node_modules/stripe/esm/resources/Climate/Orders.js
 var OrderResource;
 var init_Orders = __esm({
-  "../node_modules/stripe/esm/resources/Climate/Orders.js"() {
+  "node_modules/stripe/esm/resources/Climate/Orders.js"() {
     init_StripeResource();
     OrderResource = class extends StripeResource {
       /**
@@ -15843,10 +15857,10 @@ var init_Orders = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js
 var OutboundPaymentResource;
 var init_OutboundPayments = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js"() {
     init_StripeResource();
     OutboundPaymentResource = class extends StripeResource {
       /**
@@ -15877,10 +15891,10 @@ var init_OutboundPayments = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/OutboundPayments.js
+// node_modules/stripe/esm/resources/Treasury/OutboundPayments.js
 var OutboundPaymentResource2;
 var init_OutboundPayments2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/OutboundPayments.js"() {
+  "node_modules/stripe/esm/resources/Treasury/OutboundPayments.js"() {
     init_StripeResource();
     OutboundPaymentResource2 = class extends StripeResource {
       /**
@@ -15913,10 +15927,10 @@ var init_OutboundPayments2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js
 var OutboundTransferResource;
 var init_OutboundTransfers = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js"() {
     init_StripeResource();
     OutboundTransferResource = class extends StripeResource {
       /**
@@ -15947,10 +15961,10 @@ var init_OutboundTransfers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js
+// node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js
 var OutboundTransferResource2;
 var init_OutboundTransfers2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js"() {
+  "node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js"() {
     init_StripeResource();
     OutboundTransferResource2 = class extends StripeResource {
       /**
@@ -15983,10 +15997,10 @@ var init_OutboundTransfers2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Radar/PaymentEvaluations.js
+// node_modules/stripe/esm/resources/Radar/PaymentEvaluations.js
 var PaymentEvaluationResource;
 var init_PaymentEvaluations = __esm({
-  "../node_modules/stripe/esm/resources/Radar/PaymentEvaluations.js"() {
+  "node_modules/stripe/esm/resources/Radar/PaymentEvaluations.js"() {
     init_StripeResource();
     PaymentEvaluationResource = class extends StripeResource {
       /**
@@ -15999,10 +16013,10 @@ var init_PaymentEvaluations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js
+// node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js
 var PersonalizationDesignResource;
 var init_PersonalizationDesigns = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js"() {
+  "node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js"() {
     init_StripeResource();
     PersonalizationDesignResource = class extends StripeResource {
       /**
@@ -16035,10 +16049,10 @@ var init_PersonalizationDesigns = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js
+// node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js
 var PersonalizationDesignResource2;
 var init_PersonalizationDesigns2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js"() {
     init_StripeResource();
     PersonalizationDesignResource2 = class extends StripeResource {
       /**
@@ -16063,10 +16077,10 @@ var init_PersonalizationDesigns2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js
+// node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js
 var PhysicalBundleResource;
 var init_PhysicalBundles = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js"() {
+  "node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js"() {
     init_StripeResource();
     PhysicalBundleResource = class extends StripeResource {
       /**
@@ -16087,10 +16101,10 @@ var init_PhysicalBundles = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Climate/Products.js
+// node_modules/stripe/esm/resources/Climate/Products.js
 var ProductResource;
 var init_Products = __esm({
-  "../node_modules/stripe/esm/resources/Climate/Products.js"() {
+  "node_modules/stripe/esm/resources/Climate/Products.js"() {
     init_StripeResource();
     ProductResource = class extends StripeResource {
       /**
@@ -16128,10 +16142,10 @@ var init_Products = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/Readers.js
+// node_modules/stripe/esm/resources/Terminal/Readers.js
 var ReaderResource;
 var init_Readers = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/Readers.js"() {
+  "node_modules/stripe/esm/resources/Terminal/Readers.js"() {
     init_StripeResource();
     ReaderResource = class extends StripeResource {
       /**
@@ -16218,10 +16232,10 @@ var init_Readers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js
+// node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js
 var ReaderResource2;
 var init_Readers2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js"() {
     init_StripeResource();
     ReaderResource2 = class extends StripeResource {
       /**
@@ -16246,10 +16260,10 @@ var init_Readers2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js
 var ReceivedCreditResource;
 var init_ReceivedCredits = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js"() {
     init_StripeResource();
     ReceivedCreditResource = class extends StripeResource {
       /**
@@ -16262,10 +16276,10 @@ var init_ReceivedCredits = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js
+// node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js
 var ReceivedCreditResource2;
 var init_ReceivedCredits2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js"() {
+  "node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js"() {
     init_StripeResource();
     ReceivedCreditResource2 = class extends StripeResource {
       /**
@@ -16286,10 +16300,10 @@ var init_ReceivedCredits2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js
 var ReceivedDebitResource;
 var init_ReceivedDebits = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js"() {
     init_StripeResource();
     ReceivedDebitResource = class extends StripeResource {
       /**
@@ -16302,10 +16316,10 @@ var init_ReceivedDebits = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js
+// node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js
 var ReceivedDebitResource2;
 var init_ReceivedDebits2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js"() {
+  "node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js"() {
     init_StripeResource();
     ReceivedDebitResource2 = class extends StripeResource {
       /**
@@ -16326,10 +16340,10 @@ var init_ReceivedDebits2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Refunds.js
+// node_modules/stripe/esm/resources/TestHelpers/Refunds.js
 var RefundResource;
 var init_Refunds = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Refunds.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Refunds.js"() {
     init_StripeResource();
     RefundResource = class extends StripeResource {
       /**
@@ -16342,10 +16356,10 @@ var init_Refunds = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/Registrations.js
+// node_modules/stripe/esm/resources/Tax/Registrations.js
 var RegistrationResource;
 var init_Registrations = __esm({
-  "../node_modules/stripe/esm/resources/Tax/Registrations.js"() {
+  "node_modules/stripe/esm/resources/Tax/Registrations.js"() {
     init_StripeResource();
     RegistrationResource = class extends StripeResource {
       /**
@@ -16380,10 +16394,10 @@ var init_Registrations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Reporting/ReportRuns.js
+// node_modules/stripe/esm/resources/Reporting/ReportRuns.js
 var ReportRunResource;
 var init_ReportRuns = __esm({
-  "../node_modules/stripe/esm/resources/Reporting/ReportRuns.js"() {
+  "node_modules/stripe/esm/resources/Reporting/ReportRuns.js"() {
     init_StripeResource();
     ReportRunResource = class extends StripeResource {
       /**
@@ -16410,10 +16424,10 @@ var init_ReportRuns = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Reporting/ReportTypes.js
+// node_modules/stripe/esm/resources/Reporting/ReportTypes.js
 var ReportTypeResource;
 var init_ReportTypes = __esm({
-  "../node_modules/stripe/esm/resources/Reporting/ReportTypes.js"() {
+  "node_modules/stripe/esm/resources/Reporting/ReportTypes.js"() {
     init_StripeResource();
     ReportTypeResource = class extends StripeResource {
       /**
@@ -16434,10 +16448,10 @@ var init_ReportTypes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Forwarding/Requests.js
+// node_modules/stripe/esm/resources/Forwarding/Requests.js
 var RequestResource;
 var init_Requests = __esm({
-  "../node_modules/stripe/esm/resources/Forwarding/Requests.js"() {
+  "node_modules/stripe/esm/resources/Forwarding/Requests.js"() {
     init_StripeResource();
     RequestResource = class extends StripeResource {
       /**
@@ -16464,10 +16478,10 @@ var init_Requests = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js
+// node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js
 var ScheduledQueryRunResource;
 var init_ScheduledQueryRuns = __esm({
-  "../node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js"() {
+  "node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js"() {
     init_StripeResource();
     ScheduledQueryRunResource = class extends StripeResource {
       /**
@@ -16488,10 +16502,10 @@ var init_ScheduledQueryRuns = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Apps/Secrets.js
+// node_modules/stripe/esm/resources/Apps/Secrets.js
 var SecretResource;
 var init_Secrets = __esm({
-  "../node_modules/stripe/esm/resources/Apps/Secrets.js"() {
+  "node_modules/stripe/esm/resources/Apps/Secrets.js"() {
     init_StripeResource();
     SecretResource = class extends StripeResource {
       /**
@@ -16524,10 +16538,10 @@ var init_Secrets = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/BillingPortal/Sessions.js
+// node_modules/stripe/esm/resources/BillingPortal/Sessions.js
 var SessionResource;
 var init_Sessions = __esm({
-  "../node_modules/stripe/esm/resources/BillingPortal/Sessions.js"() {
+  "node_modules/stripe/esm/resources/BillingPortal/Sessions.js"() {
     init_StripeResource();
     SessionResource = class extends StripeResource {
       /**
@@ -16540,10 +16554,10 @@ var init_Sessions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Checkout/Sessions.js
+// node_modules/stripe/esm/resources/Checkout/Sessions.js
 var SessionResource2;
 var init_Sessions2 = __esm({
-  "../node_modules/stripe/esm/resources/Checkout/Sessions.js"() {
+  "node_modules/stripe/esm/resources/Checkout/Sessions.js"() {
     init_StripeResource();
     SessionResource2 = class extends StripeResource {
       /**
@@ -17114,10 +17128,10 @@ var init_Sessions2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/FinancialConnections/Sessions.js
+// node_modules/stripe/esm/resources/FinancialConnections/Sessions.js
 var SessionResource3;
 var init_Sessions3 = __esm({
-  "../node_modules/stripe/esm/resources/FinancialConnections/Sessions.js"() {
+  "node_modules/stripe/esm/resources/FinancialConnections/Sessions.js"() {
     init_StripeResource();
     SessionResource3 = class extends StripeResource {
       /**
@@ -17136,10 +17150,10 @@ var init_Sessions3 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/Settings.js
+// node_modules/stripe/esm/resources/Tax/Settings.js
 var SettingResource;
 var init_Settings = __esm({
-  "../node_modules/stripe/esm/resources/Tax/Settings.js"() {
+  "node_modules/stripe/esm/resources/Tax/Settings.js"() {
     init_StripeResource();
     SettingResource = class extends StripeResource {
       /**
@@ -17158,10 +17172,10 @@ var init_Settings = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Climate/Suppliers.js
+// node_modules/stripe/esm/resources/Climate/Suppliers.js
 var SupplierResource;
 var init_Suppliers = __esm({
-  "../node_modules/stripe/esm/resources/Climate/Suppliers.js"() {
+  "node_modules/stripe/esm/resources/Climate/Suppliers.js"() {
     init_StripeResource();
     SupplierResource = class extends StripeResource {
       /**
@@ -17182,10 +17196,10 @@ var init_Suppliers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/TestClocks.js
+// node_modules/stripe/esm/resources/TestHelpers/TestClocks.js
 var TestClockResource;
 var init_TestClocks = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/TestClocks.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/TestClocks.js"() {
     init_StripeResource();
     TestClockResource = class extends StripeResource {
       /**
@@ -17224,10 +17238,10 @@ var init_TestClocks = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Tokens.js
+// node_modules/stripe/esm/resources/Issuing/Tokens.js
 var TokenResource;
 var init_Tokens = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Tokens.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Tokens.js"() {
     init_StripeResource();
     TokenResource = class extends StripeResource {
       /**
@@ -17254,10 +17268,10 @@ var init_Tokens = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/TransactionEntries.js
+// node_modules/stripe/esm/resources/Treasury/TransactionEntries.js
 var TransactionEntryResource;
 var init_TransactionEntries = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/TransactionEntries.js"() {
+  "node_modules/stripe/esm/resources/Treasury/TransactionEntries.js"() {
     init_StripeResource();
     TransactionEntryResource = class extends StripeResource {
       /**
@@ -17657,10 +17671,10 @@ var init_TransactionEntries = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/FinancialConnections/Transactions.js
+// node_modules/stripe/esm/resources/FinancialConnections/Transactions.js
 var TransactionResource;
 var init_Transactions = __esm({
-  "../node_modules/stripe/esm/resources/FinancialConnections/Transactions.js"() {
+  "node_modules/stripe/esm/resources/FinancialConnections/Transactions.js"() {
     init_StripeResource();
     TransactionResource = class extends StripeResource {
       /**
@@ -17681,10 +17695,10 @@ var init_Transactions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/Transactions.js
+// node_modules/stripe/esm/resources/Issuing/Transactions.js
 var TransactionResource2;
 var init_Transactions2 = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/Transactions.js"() {
+  "node_modules/stripe/esm/resources/Issuing/Transactions.js"() {
     init_StripeResource();
     TransactionResource2 = class extends StripeResource {
       /**
@@ -17967,10 +17981,10 @@ var init_Transactions2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/Transactions.js
+// node_modules/stripe/esm/resources/Tax/Transactions.js
 var TransactionResource3;
 var init_Transactions3 = __esm({
-  "../node_modules/stripe/esm/resources/Tax/Transactions.js"() {
+  "node_modules/stripe/esm/resources/Tax/Transactions.js"() {
     init_StripeResource();
     TransactionResource3 = class extends StripeResource {
       /**
@@ -18003,10 +18017,10 @@ var init_Transactions3 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js
+// node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js
 var TransactionResource4;
 var init_Transactions4 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js"() {
     init_StripeResource();
     TransactionResource4 = class extends StripeResource {
       /**
@@ -18386,10 +18400,10 @@ var init_Transactions4 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/Transactions.js
+// node_modules/stripe/esm/resources/Treasury/Transactions.js
 var TransactionResource5;
 var init_Transactions5 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/Transactions.js"() {
+  "node_modules/stripe/esm/resources/Treasury/Transactions.js"() {
     init_StripeResource();
     TransactionResource5 = class extends StripeResource {
       /**
@@ -18841,10 +18855,10 @@ var init_Transactions5 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Radar/ValueListItems.js
+// node_modules/stripe/esm/resources/Radar/ValueListItems.js
 var ValueListItemResource;
 var init_ValueListItems = __esm({
-  "../node_modules/stripe/esm/resources/Radar/ValueListItems.js"() {
+  "node_modules/stripe/esm/resources/Radar/ValueListItems.js"() {
     init_StripeResource();
     ValueListItemResource = class extends StripeResource {
       /**
@@ -18877,10 +18891,10 @@ var init_ValueListItems = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Radar/ValueLists.js
+// node_modules/stripe/esm/resources/Radar/ValueLists.js
 var ValueListResource;
 var init_ValueLists = __esm({
-  "../node_modules/stripe/esm/resources/Radar/ValueLists.js"() {
+  "node_modules/stripe/esm/resources/Radar/ValueLists.js"() {
     init_StripeResource();
     ValueListResource = class extends StripeResource {
       /**
@@ -18919,10 +18933,10 @@ var init_ValueLists = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Identity/VerificationReports.js
+// node_modules/stripe/esm/resources/Identity/VerificationReports.js
 var VerificationReportResource;
 var init_VerificationReports = __esm({
-  "../node_modules/stripe/esm/resources/Identity/VerificationReports.js"() {
+  "node_modules/stripe/esm/resources/Identity/VerificationReports.js"() {
     init_StripeResource();
     VerificationReportResource = class extends StripeResource {
       /**
@@ -18943,10 +18957,10 @@ var init_VerificationReports = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Identity/VerificationSessions.js
+// node_modules/stripe/esm/resources/Identity/VerificationSessions.js
 var VerificationSessionResource;
 var init_VerificationSessions = __esm({
-  "../node_modules/stripe/esm/resources/Identity/VerificationSessions.js"() {
+  "node_modules/stripe/esm/resources/Identity/VerificationSessions.js"() {
     init_StripeResource();
     VerificationSessionResource = class extends StripeResource {
       /**
@@ -19023,10 +19037,10 @@ var init_VerificationSessions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Accounts.js
+// node_modules/stripe/esm/resources/Accounts.js
 var AccountResource3;
 var init_Accounts3 = __esm({
-  "../node_modules/stripe/esm/resources/Accounts.js"() {
+  "node_modules/stripe/esm/resources/Accounts.js"() {
     init_StripeResource();
     AccountResource3 = class extends StripeResource {
       /**
@@ -19205,10 +19219,10 @@ var init_Accounts3 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/AccountLinks.js
+// node_modules/stripe/esm/resources/AccountLinks.js
 var AccountLinkResource2;
 var init_AccountLinks2 = __esm({
-  "../node_modules/stripe/esm/resources/AccountLinks.js"() {
+  "node_modules/stripe/esm/resources/AccountLinks.js"() {
     init_StripeResource();
     AccountLinkResource2 = class extends StripeResource {
       /**
@@ -19221,10 +19235,10 @@ var init_AccountLinks2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/AccountSessions.js
+// node_modules/stripe/esm/resources/AccountSessions.js
 var AccountSessionResource;
 var init_AccountSessions = __esm({
-  "../node_modules/stripe/esm/resources/AccountSessions.js"() {
+  "node_modules/stripe/esm/resources/AccountSessions.js"() {
     init_StripeResource();
     AccountSessionResource = class extends StripeResource {
       /**
@@ -19237,10 +19251,10 @@ var init_AccountSessions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/ApplePayDomains.js
+// node_modules/stripe/esm/resources/ApplePayDomains.js
 var ApplePayDomainResource;
 var init_ApplePayDomains = __esm({
-  "../node_modules/stripe/esm/resources/ApplePayDomains.js"() {
+  "node_modules/stripe/esm/resources/ApplePayDomains.js"() {
     init_StripeResource();
     ApplePayDomainResource = class extends StripeResource {
       /**
@@ -19273,10 +19287,10 @@ var init_ApplePayDomains = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/ApplicationFees.js
+// node_modules/stripe/esm/resources/ApplicationFees.js
 var ApplicationFeeResource;
 var init_ApplicationFees = __esm({
-  "../node_modules/stripe/esm/resources/ApplicationFees.js"() {
+  "node_modules/stripe/esm/resources/ApplicationFees.js"() {
     init_StripeResource();
     ApplicationFeeResource = class extends StripeResource {
       /**
@@ -19333,10 +19347,10 @@ var init_ApplicationFees = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Balance.js
+// node_modules/stripe/esm/resources/Balance.js
 var BalanceResource;
 var init_Balance = __esm({
-  "../node_modules/stripe/esm/resources/Balance.js"() {
+  "node_modules/stripe/esm/resources/Balance.js"() {
     init_StripeResource();
     BalanceResource = class extends StripeResource {
       /**
@@ -19350,10 +19364,10 @@ var init_Balance = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/BalanceSettings.js
+// node_modules/stripe/esm/resources/BalanceSettings.js
 var BalanceSettingResource;
 var init_BalanceSettings = __esm({
-  "../node_modules/stripe/esm/resources/BalanceSettings.js"() {
+  "node_modules/stripe/esm/resources/BalanceSettings.js"() {
     init_StripeResource();
     BalanceSettingResource = class extends StripeResource {
       /**
@@ -19374,10 +19388,10 @@ var init_BalanceSettings = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/BalanceTransactions.js
+// node_modules/stripe/esm/resources/BalanceTransactions.js
 var BalanceTransactionResource;
 var init_BalanceTransactions = __esm({
-  "../node_modules/stripe/esm/resources/BalanceTransactions.js"() {
+  "node_modules/stripe/esm/resources/BalanceTransactions.js"() {
     init_StripeResource();
     BalanceTransactionResource = class extends StripeResource {
       /**
@@ -19402,10 +19416,10 @@ var init_BalanceTransactions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Charges.js
+// node_modules/stripe/esm/resources/Charges.js
 var ChargeResource;
 var init_Charges = __esm({
-  "../node_modules/stripe/esm/resources/Charges.js"() {
+  "node_modules/stripe/esm/resources/Charges.js"() {
     init_StripeResource();
     ChargeResource = class extends StripeResource {
       /**
@@ -19461,10 +19475,10 @@ var init_Charges = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/ConfirmationTokens.js
+// node_modules/stripe/esm/resources/ConfirmationTokens.js
 var ConfirmationTokenResource2;
 var init_ConfirmationTokens2 = __esm({
-  "../node_modules/stripe/esm/resources/ConfirmationTokens.js"() {
+  "node_modules/stripe/esm/resources/ConfirmationTokens.js"() {
     init_StripeResource();
     ConfirmationTokenResource2 = class extends StripeResource {
       /**
@@ -19477,10 +19491,10 @@ var init_ConfirmationTokens2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/CountrySpecs.js
+// node_modules/stripe/esm/resources/CountrySpecs.js
 var CountrySpecResource;
 var init_CountrySpecs = __esm({
-  "../node_modules/stripe/esm/resources/CountrySpecs.js"() {
+  "node_modules/stripe/esm/resources/CountrySpecs.js"() {
     init_StripeResource();
     CountrySpecResource = class extends StripeResource {
       /**
@@ -19501,10 +19515,10 @@ var init_CountrySpecs = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Coupons.js
+// node_modules/stripe/esm/resources/Coupons.js
 var CouponResource;
 var init_Coupons = __esm({
-  "../node_modules/stripe/esm/resources/Coupons.js"() {
+  "node_modules/stripe/esm/resources/Coupons.js"() {
     init_StripeResource();
     CouponResource = class extends StripeResource {
       /**
@@ -19545,10 +19559,10 @@ var init_Coupons = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/CreditNotes.js
+// node_modules/stripe/esm/resources/CreditNotes.js
 var CreditNoteResource;
 var init_CreditNotes = __esm({
-  "../node_modules/stripe/esm/resources/CreditNotes.js"() {
+  "node_modules/stripe/esm/resources/CreditNotes.js"() {
     init_StripeResource();
     CreditNoteResource = class extends StripeResource {
       /**
@@ -19838,10 +19852,10 @@ var init_CreditNotes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Customers.js
+// node_modules/stripe/esm/resources/Customers.js
 var CustomerResource2;
 var init_Customers2 = __esm({
-  "../node_modules/stripe/esm/resources/Customers.js"() {
+  "node_modules/stripe/esm/resources/Customers.js"() {
     init_StripeResource();
     CustomerResource2 = class extends StripeResource {
       /**
@@ -20507,10 +20521,10 @@ var init_Customers2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/CustomerSessions.js
+// node_modules/stripe/esm/resources/CustomerSessions.js
 var CustomerSessionResource;
 var init_CustomerSessions = __esm({
-  "../node_modules/stripe/esm/resources/CustomerSessions.js"() {
+  "node_modules/stripe/esm/resources/CustomerSessions.js"() {
     init_StripeResource();
     CustomerSessionResource = class extends StripeResource {
       /**
@@ -20523,10 +20537,10 @@ var init_CustomerSessions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Disputes.js
+// node_modules/stripe/esm/resources/Disputes.js
 var DisputeResource2;
 var init_Disputes2 = __esm({
-  "../node_modules/stripe/esm/resources/Disputes.js"() {
+  "node_modules/stripe/esm/resources/Disputes.js"() {
     init_StripeResource();
     DisputeResource2 = class extends StripeResource {
       /**
@@ -20563,10 +20577,10 @@ var init_Disputes2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/EphemeralKeys.js
+// node_modules/stripe/esm/resources/EphemeralKeys.js
 var EphemeralKeyResource;
 var init_EphemeralKeys = __esm({
-  "../node_modules/stripe/esm/resources/EphemeralKeys.js"() {
+  "node_modules/stripe/esm/resources/EphemeralKeys.js"() {
     init_StripeResource();
     EphemeralKeyResource = class extends StripeResource {
       /**
@@ -20588,10 +20602,10 @@ var init_EphemeralKeys = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Events.js
+// node_modules/stripe/esm/resources/Events.js
 var EventResource2;
 var init_Events2 = __esm({
-  "../node_modules/stripe/esm/resources/Events.js"() {
+  "node_modules/stripe/esm/resources/Events.js"() {
     init_StripeResource();
     EventResource2 = class extends StripeResource {
       /**
@@ -20612,10 +20626,10 @@ var init_Events2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/ExchangeRates.js
+// node_modules/stripe/esm/resources/ExchangeRates.js
 var ExchangeRateResource;
 var init_ExchangeRates = __esm({
-  "../node_modules/stripe/esm/resources/ExchangeRates.js"() {
+  "node_modules/stripe/esm/resources/ExchangeRates.js"() {
     init_StripeResource();
     ExchangeRateResource = class extends StripeResource {
       /**
@@ -20642,7 +20656,7 @@ var init_ExchangeRates = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/multipart.js
+// node_modules/stripe/esm/multipart.js
 function multipartRequestDataProcessor(method, data, headers, callback) {
   data = data || {};
   if (method !== "POST") {
@@ -20655,7 +20669,7 @@ function multipartRequestDataProcessor(method, data, headers, callback) {
 }
 var multipartDataGenerator;
 var init_multipart = __esm({
-  "../node_modules/stripe/esm/multipart.js"() {
+  "node_modules/stripe/esm/multipart.js"() {
     init_utils5();
     multipartDataGenerator = (method, data, headers) => {
       const segno = (Math.round(Math.random() * 1e16) + Math.round(Math.random() * 1e16)).toString();
@@ -20699,10 +20713,10 @@ var init_multipart = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Files.js
+// node_modules/stripe/esm/resources/Files.js
 var FileResource;
 var init_Files = __esm({
-  "../node_modules/stripe/esm/resources/Files.js"() {
+  "node_modules/stripe/esm/resources/Files.js"() {
     init_multipart();
     init_StripeResource();
     FileResource = class extends StripeResource {
@@ -20741,10 +20755,10 @@ var init_Files = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/FileLinks.js
+// node_modules/stripe/esm/resources/FileLinks.js
 var FileLinkResource;
 var init_FileLinks = __esm({
-  "../node_modules/stripe/esm/resources/FileLinks.js"() {
+  "node_modules/stripe/esm/resources/FileLinks.js"() {
     init_StripeResource();
     FileLinkResource = class extends StripeResource {
       /**
@@ -20777,10 +20791,10 @@ var init_FileLinks = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Invoices.js
+// node_modules/stripe/esm/resources/Invoices.js
 var InvoiceResource;
 var init_Invoices = __esm({
-  "../node_modules/stripe/esm/resources/Invoices.js"() {
+  "node_modules/stripe/esm/resources/Invoices.js"() {
     init_StripeResource();
     InvoiceResource = class extends StripeResource {
       /**
@@ -21646,10 +21660,10 @@ var init_Invoices = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/InvoiceItems.js
+// node_modules/stripe/esm/resources/InvoiceItems.js
 var InvoiceItemResource;
 var init_InvoiceItems = __esm({
-  "../node_modules/stripe/esm/resources/InvoiceItems.js"() {
+  "node_modules/stripe/esm/resources/InvoiceItems.js"() {
     init_StripeResource();
     InvoiceItemResource = class extends StripeResource {
       /**
@@ -21793,10 +21807,10 @@ var init_InvoiceItems = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/InvoicePayments.js
+// node_modules/stripe/esm/resources/InvoicePayments.js
 var InvoicePaymentResource;
 var init_InvoicePayments = __esm({
-  "../node_modules/stripe/esm/resources/InvoicePayments.js"() {
+  "node_modules/stripe/esm/resources/InvoicePayments.js"() {
     init_StripeResource();
     InvoicePaymentResource = class extends StripeResource {
       /**
@@ -21817,10 +21831,10 @@ var init_InvoicePayments = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js
+// node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js
 var InvoiceRenderingTemplateResource;
 var init_InvoiceRenderingTemplates = __esm({
-  "../node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js"() {
+  "node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js"() {
     init_StripeResource();
     InvoiceRenderingTemplateResource = class extends StripeResource {
       /**
@@ -21853,10 +21867,10 @@ var init_InvoiceRenderingTemplates = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Mandates.js
+// node_modules/stripe/esm/resources/Mandates.js
 var MandateResource;
 var init_Mandates = __esm({
-  "../node_modules/stripe/esm/resources/Mandates.js"() {
+  "node_modules/stripe/esm/resources/Mandates.js"() {
     init_StripeResource();
     MandateResource = class extends StripeResource {
       /**
@@ -21869,10 +21883,10 @@ var init_Mandates = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/OAuth.js
+// node_modules/stripe/esm/resources/OAuth.js
 var OAuthResource;
 var init_OAuth = __esm({
-  "../node_modules/stripe/esm/resources/OAuth.js"() {
+  "node_modules/stripe/esm/resources/OAuth.js"() {
     "use strict";
     init_StripeResource();
     init_utils5();
@@ -21917,10 +21931,10 @@ var init_OAuth = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentAttemptRecords.js
+// node_modules/stripe/esm/resources/PaymentAttemptRecords.js
 var PaymentAttemptRecordResource;
 var init_PaymentAttemptRecords = __esm({
-  "../node_modules/stripe/esm/resources/PaymentAttemptRecords.js"() {
+  "node_modules/stripe/esm/resources/PaymentAttemptRecords.js"() {
     init_StripeResource();
     PaymentAttemptRecordResource = class extends StripeResource {
       /**
@@ -21941,10 +21955,10 @@ var init_PaymentAttemptRecords = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentIntents.js
+// node_modules/stripe/esm/resources/PaymentIntents.js
 var PaymentIntentResource;
 var init_PaymentIntents = __esm({
-  "../node_modules/stripe/esm/resources/PaymentIntents.js"() {
+  "node_modules/stripe/esm/resources/PaymentIntents.js"() {
     init_StripeResource();
     PaymentIntentResource = class extends StripeResource {
       /**
@@ -22113,10 +22127,10 @@ var init_PaymentIntents = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentLinks.js
+// node_modules/stripe/esm/resources/PaymentLinks.js
 var PaymentLinkResource;
 var init_PaymentLinks = __esm({
-  "../node_modules/stripe/esm/resources/PaymentLinks.js"() {
+  "node_modules/stripe/esm/resources/PaymentLinks.js"() {
     init_StripeResource();
     PaymentLinkResource = class extends StripeResource {
       /**
@@ -22550,10 +22564,10 @@ var init_PaymentLinks = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentMethods.js
+// node_modules/stripe/esm/resources/PaymentMethods.js
 var PaymentMethodResource;
 var init_PaymentMethods = __esm({
-  "../node_modules/stripe/esm/resources/PaymentMethods.js"() {
+  "node_modules/stripe/esm/resources/PaymentMethods.js"() {
     init_StripeResource();
     PaymentMethodResource = class extends StripeResource {
       /**
@@ -22612,10 +22626,10 @@ var init_PaymentMethods = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentMethodConfigurations.js
+// node_modules/stripe/esm/resources/PaymentMethodConfigurations.js
 var PaymentMethodConfigurationResource;
 var init_PaymentMethodConfigurations = __esm({
-  "../node_modules/stripe/esm/resources/PaymentMethodConfigurations.js"() {
+  "node_modules/stripe/esm/resources/PaymentMethodConfigurations.js"() {
     init_StripeResource();
     PaymentMethodConfigurationResource = class extends StripeResource {
       /**
@@ -22648,10 +22662,10 @@ var init_PaymentMethodConfigurations = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentMethodDomains.js
+// node_modules/stripe/esm/resources/PaymentMethodDomains.js
 var PaymentMethodDomainResource;
 var init_PaymentMethodDomains = __esm({
-  "../node_modules/stripe/esm/resources/PaymentMethodDomains.js"() {
+  "node_modules/stripe/esm/resources/PaymentMethodDomains.js"() {
     init_StripeResource();
     PaymentMethodDomainResource = class extends StripeResource {
       /**
@@ -22695,10 +22709,10 @@ var init_PaymentMethodDomains = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PaymentRecords.js
+// node_modules/stripe/esm/resources/PaymentRecords.js
 var PaymentRecordResource;
 var init_PaymentRecords = __esm({
-  "../node_modules/stripe/esm/resources/PaymentRecords.js"() {
+  "node_modules/stripe/esm/resources/PaymentRecords.js"() {
     init_StripeResource();
     PaymentRecordResource = class extends StripeResource {
       /**
@@ -22760,10 +22774,10 @@ var init_PaymentRecords = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Payouts.js
+// node_modules/stripe/esm/resources/Payouts.js
 var PayoutResource;
 var init_Payouts = __esm({
-  "../node_modules/stripe/esm/resources/Payouts.js"() {
+  "node_modules/stripe/esm/resources/Payouts.js"() {
     init_StripeResource();
     PayoutResource = class extends StripeResource {
       /**
@@ -22814,10 +22828,10 @@ var init_Payouts = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Plans.js
+// node_modules/stripe/esm/resources/Plans.js
 var PlanResource;
 var init_Plans = __esm({
-  "../node_modules/stripe/esm/resources/Plans.js"() {
+  "node_modules/stripe/esm/resources/Plans.js"() {
     init_StripeResource();
     PlanResource = class extends StripeResource {
       /**
@@ -22974,10 +22988,10 @@ var init_Plans = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Prices.js
+// node_modules/stripe/esm/resources/Prices.js
 var PriceResource;
 var init_Prices = __esm({
-  "../node_modules/stripe/esm/resources/Prices.js"() {
+  "node_modules/stripe/esm/resources/Prices.js"() {
     init_StripeResource();
     PriceResource = class extends StripeResource {
       /**
@@ -23340,10 +23354,10 @@ var init_Prices = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Products.js
+// node_modules/stripe/esm/resources/Products.js
 var ProductResource2;
 var init_Products2 = __esm({
-  "../node_modules/stripe/esm/resources/Products.js"() {
+  "node_modules/stripe/esm/resources/Products.js"() {
     init_StripeResource();
     ProductResource2 = class extends StripeResource {
       /**
@@ -23450,10 +23464,10 @@ var init_Products2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/PromotionCodes.js
+// node_modules/stripe/esm/resources/PromotionCodes.js
 var PromotionCodeResource;
 var init_PromotionCodes = __esm({
-  "../node_modules/stripe/esm/resources/PromotionCodes.js"() {
+  "node_modules/stripe/esm/resources/PromotionCodes.js"() {
     init_StripeResource();
     PromotionCodeResource = class extends StripeResource {
       /**
@@ -23486,10 +23500,10 @@ var init_PromotionCodes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Quotes.js
+// node_modules/stripe/esm/resources/Quotes.js
 var QuoteResource;
 var init_Quotes = __esm({
-  "../node_modules/stripe/esm/resources/Quotes.js"() {
+  "node_modules/stripe/esm/resources/Quotes.js"() {
     init_StripeResource();
     QuoteResource = class extends StripeResource {
       /**
@@ -24363,10 +24377,10 @@ var init_Quotes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Refunds.js
+// node_modules/stripe/esm/resources/Refunds.js
 var RefundResource2;
 var init_Refunds2 = __esm({
-  "../node_modules/stripe/esm/resources/Refunds.js"() {
+  "node_modules/stripe/esm/resources/Refunds.js"() {
     init_StripeResource();
     RefundResource2 = class extends StripeResource {
       /**
@@ -24419,10 +24433,10 @@ var init_Refunds2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Reviews.js
+// node_modules/stripe/esm/resources/Reviews.js
 var ReviewResource;
 var init_Reviews = __esm({
-  "../node_modules/stripe/esm/resources/Reviews.js"() {
+  "node_modules/stripe/esm/resources/Reviews.js"() {
     init_StripeResource();
     ReviewResource = class extends StripeResource {
       /**
@@ -24449,10 +24463,10 @@ var init_Reviews = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/SetupAttempts.js
+// node_modules/stripe/esm/resources/SetupAttempts.js
 var SetupAttemptResource;
 var init_SetupAttempts = __esm({
-  "../node_modules/stripe/esm/resources/SetupAttempts.js"() {
+  "node_modules/stripe/esm/resources/SetupAttempts.js"() {
     init_StripeResource();
     SetupAttemptResource = class extends StripeResource {
       /**
@@ -24467,10 +24481,10 @@ var init_SetupAttempts = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/SetupIntents.js
+// node_modules/stripe/esm/resources/SetupIntents.js
 var SetupIntentResource;
 var init_SetupIntents = __esm({
-  "../node_modules/stripe/esm/resources/SetupIntents.js"() {
+  "node_modules/stripe/esm/resources/SetupIntents.js"() {
     init_StripeResource();
     SetupIntentResource = class extends StripeResource {
       /**
@@ -24543,10 +24557,10 @@ var init_SetupIntents = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/ShippingRates.js
+// node_modules/stripe/esm/resources/ShippingRates.js
 var ShippingRateResource;
 var init_ShippingRates = __esm({
-  "../node_modules/stripe/esm/resources/ShippingRates.js"() {
+  "node_modules/stripe/esm/resources/ShippingRates.js"() {
     init_StripeResource();
     ShippingRateResource = class extends StripeResource {
       /**
@@ -24579,10 +24593,10 @@ var init_ShippingRates = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Sources.js
+// node_modules/stripe/esm/resources/Sources.js
 var SourceResource;
 var init_Sources = __esm({
-  "../node_modules/stripe/esm/resources/Sources.js"() {
+  "node_modules/stripe/esm/resources/Sources.js"() {
     init_StripeResource();
     SourceResource = class extends StripeResource {
       /**
@@ -24623,10 +24637,10 @@ var init_Sources = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Subscriptions.js
+// node_modules/stripe/esm/resources/Subscriptions.js
 var SubscriptionResource;
 var init_Subscriptions = __esm({
-  "../node_modules/stripe/esm/resources/Subscriptions.js"() {
+  "node_modules/stripe/esm/resources/Subscriptions.js"() {
     init_StripeResource();
     SubscriptionResource = class extends StripeResource {
       /**
@@ -25572,10 +25586,10 @@ var init_Subscriptions = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/SubscriptionItems.js
+// node_modules/stripe/esm/resources/SubscriptionItems.js
 var SubscriptionItemResource;
 var init_SubscriptionItems = __esm({
-  "../node_modules/stripe/esm/resources/SubscriptionItems.js"() {
+  "node_modules/stripe/esm/resources/SubscriptionItems.js"() {
     init_StripeResource();
     SubscriptionItemResource = class extends StripeResource {
       /**
@@ -25975,10 +25989,10 @@ var init_SubscriptionItems = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/SubscriptionSchedules.js
+// node_modules/stripe/esm/resources/SubscriptionSchedules.js
 var SubscriptionScheduleResource;
 var init_SubscriptionSchedules = __esm({
-  "../node_modules/stripe/esm/resources/SubscriptionSchedules.js"() {
+  "node_modules/stripe/esm/resources/SubscriptionSchedules.js"() {
     init_StripeResource();
     SubscriptionScheduleResource = class extends StripeResource {
       /**
@@ -26107,10 +26121,10 @@ var init_SubscriptionSchedules = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TaxCodes.js
+// node_modules/stripe/esm/resources/TaxCodes.js
 var TaxCodeResource;
 var init_TaxCodes = __esm({
-  "../node_modules/stripe/esm/resources/TaxCodes.js"() {
+  "node_modules/stripe/esm/resources/TaxCodes.js"() {
     init_StripeResource();
     TaxCodeResource = class extends StripeResource {
       /**
@@ -26131,10 +26145,10 @@ var init_TaxCodes = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TaxIds.js
+// node_modules/stripe/esm/resources/TaxIds.js
 var TaxIdResource;
 var init_TaxIds = __esm({
-  "../node_modules/stripe/esm/resources/TaxIds.js"() {
+  "node_modules/stripe/esm/resources/TaxIds.js"() {
     init_StripeResource();
     TaxIdResource = class extends StripeResource {
       /**
@@ -26167,10 +26181,10 @@ var init_TaxIds = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TaxRates.js
+// node_modules/stripe/esm/resources/TaxRates.js
 var TaxRateResource;
 var init_TaxRates = __esm({
-  "../node_modules/stripe/esm/resources/TaxRates.js"() {
+  "node_modules/stripe/esm/resources/TaxRates.js"() {
     init_StripeResource();
     TaxRateResource = class extends StripeResource {
       /**
@@ -26203,10 +26217,10 @@ var init_TaxRates = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tokens.js
+// node_modules/stripe/esm/resources/Tokens.js
 var TokenResource2;
 var init_Tokens2 = __esm({
-  "../node_modules/stripe/esm/resources/Tokens.js"() {
+  "node_modules/stripe/esm/resources/Tokens.js"() {
     init_StripeResource();
     TokenResource2 = class extends StripeResource {
       /**
@@ -26226,10 +26240,10 @@ var init_Tokens2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Topups.js
+// node_modules/stripe/esm/resources/Topups.js
 var TopupResource;
 var init_Topups = __esm({
-  "../node_modules/stripe/esm/resources/Topups.js"() {
+  "node_modules/stripe/esm/resources/Topups.js"() {
     init_StripeResource();
     TopupResource = class extends StripeResource {
       /**
@@ -26268,10 +26282,10 @@ var init_Topups = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Transfers.js
+// node_modules/stripe/esm/resources/Transfers.js
 var TransferResource;
 var init_Transfers = __esm({
-  "../node_modules/stripe/esm/resources/Transfers.js"() {
+  "node_modules/stripe/esm/resources/Transfers.js"() {
     init_StripeResource();
     TransferResource = class extends StripeResource {
       /**
@@ -26338,10 +26352,10 @@ var init_Transfers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/WebhookEndpoints.js
+// node_modules/stripe/esm/resources/WebhookEndpoints.js
 var WebhookEndpointResource;
 var init_WebhookEndpoints = __esm({
-  "../node_modules/stripe/esm/resources/WebhookEndpoints.js"() {
+  "node_modules/stripe/esm/resources/WebhookEndpoints.js"() {
     init_StripeResource();
     WebhookEndpointResource = class extends StripeResource {
       /**
@@ -26380,7 +26394,7 @@ var init_WebhookEndpoints = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources.js
+// node_modules/stripe/esm/resources.js
 var resources_exports = {};
 __export(resources_exports, {
   Account: () => AccountResource3,
@@ -26462,7 +26476,7 @@ __export(resources_exports, {
 });
 var Apps, Billing, BillingPortal, Checkout, Climate, Entitlements, FinancialConnections, Forwarding, Identity, Issuing, Radar, Reporting, Sigma, Tax, Terminal, TestHelpers, Treasury, V2;
 var init_resources = __esm({
-  "../node_modules/stripe/esm/resources.js"() {
+  "node_modules/stripe/esm/resources.js"() {
     init_ResourceNamespace();
     init_AccountLinks();
     init_AccountTokens();
@@ -26735,17 +26749,17 @@ var init_resources = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/shared.js
+// node_modules/stripe/esm/shared.js
 var init_shared = __esm({
-  "../node_modules/stripe/esm/shared.js"() {
+  "node_modules/stripe/esm/shared.js"() {
     init_Decimal();
   }
 });
 
-// ../node_modules/stripe/esm/resources/Apps/index.js
+// node_modules/stripe/esm/resources/Apps/index.js
 var Apps2;
 var init_Apps = __esm({
-  "../node_modules/stripe/esm/resources/Apps/index.js"() {
+  "node_modules/stripe/esm/resources/Apps/index.js"() {
     init_Secrets();
     Apps2 = class {
       constructor(stripe) {
@@ -26756,10 +26770,10 @@ var init_Apps = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Billing/index.js
+// node_modules/stripe/esm/resources/Billing/index.js
 var Billing2;
 var init_Billing = __esm({
-  "../node_modules/stripe/esm/resources/Billing/index.js"() {
+  "node_modules/stripe/esm/resources/Billing/index.js"() {
     init_Alerts();
     init_CreditBalanceSummary();
     init_CreditBalanceTransactions();
@@ -26782,10 +26796,10 @@ var init_Billing = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/BillingPortal/index.js
+// node_modules/stripe/esm/resources/BillingPortal/index.js
 var BillingPortal2;
 var init_BillingPortal = __esm({
-  "../node_modules/stripe/esm/resources/BillingPortal/index.js"() {
+  "node_modules/stripe/esm/resources/BillingPortal/index.js"() {
     init_Configurations();
     init_Sessions();
     BillingPortal2 = class {
@@ -26798,10 +26812,10 @@ var init_BillingPortal = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Checkout/index.js
+// node_modules/stripe/esm/resources/Checkout/index.js
 var Checkout2;
 var init_Checkout = __esm({
-  "../node_modules/stripe/esm/resources/Checkout/index.js"() {
+  "node_modules/stripe/esm/resources/Checkout/index.js"() {
     init_Sessions2();
     Checkout2 = class {
       constructor(stripe) {
@@ -26812,10 +26826,10 @@ var init_Checkout = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Climate/index.js
+// node_modules/stripe/esm/resources/Climate/index.js
 var Climate2;
 var init_Climate = __esm({
-  "../node_modules/stripe/esm/resources/Climate/index.js"() {
+  "node_modules/stripe/esm/resources/Climate/index.js"() {
     init_Orders();
     init_Products();
     init_Suppliers();
@@ -26830,10 +26844,10 @@ var init_Climate = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Entitlements/index.js
+// node_modules/stripe/esm/resources/Entitlements/index.js
 var Entitlements2;
 var init_Entitlements = __esm({
-  "../node_modules/stripe/esm/resources/Entitlements/index.js"() {
+  "node_modules/stripe/esm/resources/Entitlements/index.js"() {
     init_ActiveEntitlements();
     init_Features();
     Entitlements2 = class {
@@ -26846,10 +26860,10 @@ var init_Entitlements = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/FinancialConnections/index.js
+// node_modules/stripe/esm/resources/FinancialConnections/index.js
 var FinancialConnections2;
 var init_FinancialConnections = __esm({
-  "../node_modules/stripe/esm/resources/FinancialConnections/index.js"() {
+  "node_modules/stripe/esm/resources/FinancialConnections/index.js"() {
     init_Accounts();
     init_Sessions3();
     init_Transactions();
@@ -26864,10 +26878,10 @@ var init_FinancialConnections = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Forwarding/index.js
+// node_modules/stripe/esm/resources/Forwarding/index.js
 var Forwarding2;
 var init_Forwarding = __esm({
-  "../node_modules/stripe/esm/resources/Forwarding/index.js"() {
+  "node_modules/stripe/esm/resources/Forwarding/index.js"() {
     init_Requests();
     Forwarding2 = class {
       constructor(stripe) {
@@ -26878,10 +26892,10 @@ var init_Forwarding = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Identity/index.js
+// node_modules/stripe/esm/resources/Identity/index.js
 var Identity2;
 var init_Identity = __esm({
-  "../node_modules/stripe/esm/resources/Identity/index.js"() {
+  "node_modules/stripe/esm/resources/Identity/index.js"() {
     init_VerificationReports();
     init_VerificationSessions();
     Identity2 = class {
@@ -26894,10 +26908,10 @@ var init_Identity = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Issuing/index.js
+// node_modules/stripe/esm/resources/Issuing/index.js
 var Issuing2;
 var init_Issuing = __esm({
-  "../node_modules/stripe/esm/resources/Issuing/index.js"() {
+  "node_modules/stripe/esm/resources/Issuing/index.js"() {
     init_Authorizations();
     init_Cards();
     init_Cardholders();
@@ -26922,10 +26936,10 @@ var init_Issuing = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Radar/index.js
+// node_modules/stripe/esm/resources/Radar/index.js
 var Radar2;
 var init_Radar = __esm({
-  "../node_modules/stripe/esm/resources/Radar/index.js"() {
+  "node_modules/stripe/esm/resources/Radar/index.js"() {
     init_EarlyFraudWarnings();
     init_PaymentEvaluations();
     init_ValueLists();
@@ -26942,10 +26956,10 @@ var init_Radar = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Reporting/index.js
+// node_modules/stripe/esm/resources/Reporting/index.js
 var Reporting2;
 var init_Reporting = __esm({
-  "../node_modules/stripe/esm/resources/Reporting/index.js"() {
+  "node_modules/stripe/esm/resources/Reporting/index.js"() {
     init_ReportRuns();
     init_ReportTypes();
     Reporting2 = class {
@@ -26958,10 +26972,10 @@ var init_Reporting = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Sigma/index.js
+// node_modules/stripe/esm/resources/Sigma/index.js
 var Sigma2;
 var init_Sigma = __esm({
-  "../node_modules/stripe/esm/resources/Sigma/index.js"() {
+  "node_modules/stripe/esm/resources/Sigma/index.js"() {
     init_ScheduledQueryRuns();
     Sigma2 = class {
       constructor(stripe) {
@@ -26972,10 +26986,10 @@ var init_Sigma = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Tax/index.js
+// node_modules/stripe/esm/resources/Tax/index.js
 var Tax2;
 var init_Tax = __esm({
-  "../node_modules/stripe/esm/resources/Tax/index.js"() {
+  "node_modules/stripe/esm/resources/Tax/index.js"() {
     init_Associations();
     init_Calculations();
     init_Registrations();
@@ -26994,10 +27008,10 @@ var init_Tax = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Terminal/index.js
+// node_modules/stripe/esm/resources/Terminal/index.js
 var Terminal2;
 var init_Terminal = __esm({
-  "../node_modules/stripe/esm/resources/Terminal/index.js"() {
+  "node_modules/stripe/esm/resources/Terminal/index.js"() {
     init_Configurations2();
     init_ConnectionTokens();
     init_Locations();
@@ -27016,10 +27030,10 @@ var init_Terminal = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Issuing/index.js
+// node_modules/stripe/esm/resources/TestHelpers/Issuing/index.js
 var Issuing3;
 var init_Issuing2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Issuing/index.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Issuing/index.js"() {
     init_Authorizations2();
     init_Cards2();
     init_PersonalizationDesigns2();
@@ -27036,10 +27050,10 @@ var init_Issuing2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Terminal/index.js
+// node_modules/stripe/esm/resources/TestHelpers/Terminal/index.js
 var Terminal3;
 var init_Terminal2 = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Terminal/index.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Terminal/index.js"() {
     init_Readers2();
     Terminal3 = class {
       constructor(stripe) {
@@ -27050,10 +27064,10 @@ var init_Terminal2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/Treasury/index.js
+// node_modules/stripe/esm/resources/TestHelpers/Treasury/index.js
 var Treasury2;
 var init_Treasury = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/Treasury/index.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/Treasury/index.js"() {
     init_InboundTransfers();
     init_OutboundPayments();
     init_OutboundTransfers();
@@ -27072,10 +27086,10 @@ var init_Treasury = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/TestHelpers/index.js
+// node_modules/stripe/esm/resources/TestHelpers/index.js
 var TestHelpers2;
 var init_TestHelpers = __esm({
-  "../node_modules/stripe/esm/resources/TestHelpers/index.js"() {
+  "node_modules/stripe/esm/resources/TestHelpers/index.js"() {
     init_ConfirmationTokens();
     init_Customers();
     init_Refunds();
@@ -27098,10 +27112,10 @@ var init_TestHelpers = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Treasury/index.js
+// node_modules/stripe/esm/resources/Treasury/index.js
 var Treasury3;
 var init_Treasury2 = __esm({
-  "../node_modules/stripe/esm/resources/Treasury/index.js"() {
+  "node_modules/stripe/esm/resources/Treasury/index.js"() {
     init_CreditReversals();
     init_DebitReversals();
     init_FinancialAccounts();
@@ -27130,10 +27144,10 @@ var init_Treasury2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Billing/index.js
+// node_modules/stripe/esm/resources/V2/Billing/index.js
 var Billing3;
 var init_Billing2 = __esm({
-  "../node_modules/stripe/esm/resources/V2/Billing/index.js"() {
+  "node_modules/stripe/esm/resources/V2/Billing/index.js"() {
     init_MeterEvents2();
     init_MeterEventAdjustments2();
     init_MeterEventSession();
@@ -27150,10 +27164,10 @@ var init_Billing2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/index.js
+// node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/index.js
 var ProductCatalog;
 var init_ProductCatalog = __esm({
-  "../node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/index.js"() {
+  "node_modules/stripe/esm/resources/V2/Commerce/ProductCatalog/index.js"() {
     init_Imports();
     ProductCatalog = class {
       constructor(stripe) {
@@ -27164,10 +27178,10 @@ var init_ProductCatalog = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Commerce/index.js
+// node_modules/stripe/esm/resources/V2/Commerce/index.js
 var Commerce;
 var init_Commerce = __esm({
-  "../node_modules/stripe/esm/resources/V2/Commerce/index.js"() {
+  "node_modules/stripe/esm/resources/V2/Commerce/index.js"() {
     init_ProductCatalog();
     Commerce = class {
       constructor(stripe) {
@@ -27178,10 +27192,10 @@ var init_Commerce = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/Core/index.js
+// node_modules/stripe/esm/resources/V2/Core/index.js
 var Core;
 var init_Core = __esm({
-  "../node_modules/stripe/esm/resources/V2/Core/index.js"() {
+  "node_modules/stripe/esm/resources/V2/Core/index.js"() {
     init_Accounts2();
     init_AccountLinks();
     init_AccountTokens();
@@ -27200,10 +27214,10 @@ var init_Core = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/V2/index.js
+// node_modules/stripe/esm/resources/V2/index.js
 var V22;
 var init_V2 = __esm({
-  "../node_modules/stripe/esm/resources/V2/index.js"() {
+  "node_modules/stripe/esm/resources/V2/index.js"() {
     init_Billing2();
     init_Commerce();
     init_Core();
@@ -27218,13 +27232,13 @@ var init_V2 = __esm({
   }
 });
 
-// ../node_modules/stripe/esm/resources/Reserve/index.js
+// node_modules/stripe/esm/resources/Reserve/index.js
 var init_Reserve = __esm({
-  "../node_modules/stripe/esm/resources/Reserve/index.js"() {
+  "node_modules/stripe/esm/resources/Reserve/index.js"() {
   }
 });
 
-// ../node_modules/stripe/esm/stripe.esm.node.js
+// node_modules/stripe/esm/stripe.esm.node.js
 var stripe_esm_node_exports = {};
 __export(stripe_esm_node_exports, {
   Stripe: () => Stripe,
@@ -27237,7 +27251,7 @@ function createStripe(platformFunctions, requestSender = defaultRequestSenderFac
 }
 var DEFAULT_HOST, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, DEFAULT_TIMEOUT, MAX_NETWORK_RETRY_DELAY_SEC, INITIAL_NETWORK_RETRY_DELAY_SEC, APP_INFO_PROPERTIES, ALLOWED_CONFIG_PROPERTIES, defaultRequestSenderFactory, Stripe, stripe_esm_node_default;
 var init_stripe_esm_node = __esm({
-  "../node_modules/stripe/esm/stripe.esm.node.js"() {
+  "node_modules/stripe/esm/stripe.esm.node.js"() {
     init_Error();
     init_RequestSender();
     init_StripeResource();
@@ -38927,19 +38941,6 @@ async function generateEmbedding(text2) {
     return null;
   }
 }
-function cosineSimilarity(a, b2) {
-  if (a.length !== b2.length) return 0;
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b2[i];
-    normA += a[i] * a[i];
-    normB += b2[i] * b2[i];
-  }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB);
-  return denom === 0 ? 0 : dot / denom;
-}
 var geminiAvailable = !!GEMINI_API_KEY;
 
 // server/services/lemma-service.ts
@@ -39076,88 +39077,6 @@ async function logAgentActivityToLemma(activity) {
 
 // server/services/agent-service.ts
 var lemmaRecordCache = /* @__PURE__ */ new Map();
-var INTENT_PATTERNS = {
-  bug_report: [
-    /broke|broken|bug|crash|error|fail|failure|not working|doesn't work|wtf|broken again|timeout|hang|freeze|stuck/i
-  ],
-  feature_request: [
-    /add|feature|request|would be nice|should have|need to|support for|implement/i
-  ],
-  complaint: [
-    /slow|terrible|awful|hate|worst|annoying|frustrat|disappoint/i
-  ],
-  question: [
-    /how to|how do|what is|where is|why does|can i|help with/i
-  ]
-};
-var COMPONENT_PATTERNS = {
-  auth: [/login|logout|signin|sign out|password|2fa|mfa|oauth|token|auth|session|credential/i],
-  billing: [/invoice|payment|charge|billing|subscription|price|cost|plan|receipt|refund/i],
-  ui: [/button|modal|dropdown|menu|page|screen|layout|color|theme|font|icon|click|scroll|display|view/i],
-  api: [/endpoint|api|route|request|response|status code|404|500|json|payload|header/i],
-  database: [/db|database|query|table|column|migration|sql|mongo|postgres|redis|cache/i],
-  notifications: [/email|notification|alert|push|sms|webhook|slack|message|remind/i]
-};
-var SEVERITY_KEYWORDS = {
-  broke: 30,
-  broken: 30,
-  crash: 30,
-  down: 30,
-  "not working": 25,
-  "doesn't work": 25,
-  timeout: 20,
-  hang: 20,
-  freeze: 20,
-  stuck: 15,
-  wtf: 10,
-  error: 10,
-  fail: 10,
-  urgent: 20,
-  critical: 30,
-  asap: 15
-};
-function classifyIntentPattern(content) {
-  const scores = {};
-  for (const [intent, patterns] of Object.entries(INTENT_PATTERNS)) {
-    scores[intent] = 0;
-    for (const pattern of patterns) {
-      const matches = content.match(pattern);
-      if (matches) scores[intent] += matches.length;
-    }
-  }
-  const total = Object.values(scores).reduce((a, b2) => a + b2, 0);
-  if (total === 0) return { intent: "other", confidence: 0.7 };
-  const best = Object.entries(scores).sort((a, b2) => b2[1] - a[1])[0];
-  return { intent: best[0], confidence: Math.min(0.95, 0.5 + best[1] * 0.15) };
-}
-function classifyComponentPattern(content) {
-  const scores = {};
-  for (const [component, patterns] of Object.entries(COMPONENT_PATTERNS)) {
-    scores[component] = 0;
-    for (const pattern of patterns) {
-      const matches = content.match(pattern);
-      if (matches) scores[component] += matches.length;
-    }
-  }
-  const total = Object.values(scores).reduce((a, b2) => a + b2, 0);
-  if (total === 0) return { component: "other", confidence: 0.6 };
-  const best = Object.entries(scores).sort((a, b2) => b2[1] - a[1])[0];
-  return { component: best[0], confidence: Math.min(0.95, 0.5 + best[1] * 0.2) };
-}
-function calculateSeverityPattern(content) {
-  let score = 0;
-  const lower = content.toLowerCase();
-  for (const [keyword, weight] of Object.entries(SEVERITY_KEYWORDS)) {
-    if (lower.includes(keyword)) score += weight;
-  }
-  if (/again|still|never|always/.test(lower)) score += 10;
-  score = Math.min(100, score);
-  let label = "P3";
-  if (score >= 80) label = "P0";
-  else if (score >= 60) label = "P1";
-  else if (score >= 40) label = "P2";
-  return { score, label };
-}
 function generateTitle(content, component) {
   const lower = content.toLowerCase();
   if (lower.includes("login")) return `Login timeout \u2014 ${component}`;
@@ -39173,51 +39092,40 @@ function generateTitle(content, component) {
 async function runParserAgent(messageId) {
   const db2 = getDb();
   const startTime = Date.now();
+  const earlyMessage = await db2.query.messages.findFirst({
+    where: eq(messages.id, messageId)
+  });
+  if (!earlyMessage) throw new Error("Message not found");
+  const tenantId = earlyMessage.tenantId;
   await db2.insert(agentActivities).values({
+    tenantId,
     agentName: "parser",
     action: geminiAvailable ? "Analyzing with Gemini AI..." : "Analyzing intent and extracting components",
     targetId: messageId,
     targetType: "message",
     status: "running"
   });
-  const message3 = await db2.query.messages.findFirst({
-    where: eq(messages.id, messageId)
-  });
-  if (!message3) throw new Error("Message not found");
-  let intent;
-  let intentConfidence;
-  let component;
-  let componentConfidence;
-  let severityScore;
-  let severityLabel;
-  let keywords;
-  let usedGemini = false;
-  const geminiResult = await parseMessageWithGemini(message3.rawContent);
-  if (geminiResult) {
-    intent = geminiResult.intent;
-    intentConfidence = geminiResult.intentConfidence;
-    component = geminiResult.component;
-    componentConfidence = geminiResult.componentConfidence;
-    severityScore = geminiResult.severityScore;
-    severityLabel = geminiResult.severityLabel;
-    keywords = geminiResult.keywords;
-    usedGemini = true;
-  } else {
-    const intentResult = classifyIntentPattern(message3.rawContent);
-    const componentResult = classifyComponentPattern(message3.rawContent);
-    const severityResult = calculateSeverityPattern(message3.rawContent);
-    intent = intentResult.intent;
-    intentConfidence = intentResult.confidence;
-    component = componentResult.component;
-    componentConfidence = componentResult.confidence;
-    severityScore = severityResult.score;
-    severityLabel = severityResult.label;
-    keywords = extractKeywords(message3.rawContent);
+  const message3 = earlyMessage;
+  if (!geminiAvailable) {
+    throw new Error("Gemini API is required for agent processing. Please configure the GEMINI_API_KEY environment variable.");
   }
+  const geminiResult = await parseMessageWithGemini(message3.rawContent);
+  if (!geminiResult) {
+    throw new Error("Gemini API failed to parse message.");
+  }
+  const intent = geminiResult.intent;
+  const intentConfidence = geminiResult.intentConfidence;
+  const component = geminiResult.component;
+  const componentConfidence = geminiResult.componentConfidence;
+  const severityScore = geminiResult.severityScore;
+  const severityLabel = geminiResult.severityLabel;
+  const keywords = geminiResult.keywords;
+  const usedGemini = true;
   const overallConfidence = (intentConfidence + componentConfidence) / 2;
   const embeddingText = `${message3.rawContent} component:${component} intent:${intent}`;
   const embedding = await generateEmbedding(embeddingText);
   const [parsed] = await db2.insert(parsedResults).values({
+    tenantId: message3.tenantId,
     messageId,
     intent,
     intentConfidence,
@@ -39229,24 +39137,15 @@ async function runParserAgent(messageId) {
     keywords,
     entities: {
       ...extractEntities(message3.rawContent),
-      ...embedding ? { hasEmbedding: "true" } : {},
       engine: usedGemini ? "gemini" : "pattern"
     },
+    embedding: embedding ?? null,
     flaggedForReview: overallConfidence < 0.6 ? 1 : 0
   }).returning({ id: parsedResults.id });
-  if (embedding) {
-    await db2.update(parsedResults).set({
-      entities: {
-        ...extractEntities(message3.rawContent),
-        hasEmbedding: "true",
-        engine: usedGemini ? "gemini" : "pattern",
-        embedding: JSON.stringify(embedding)
-      }
-    }).where(eq(parsedResults.id, parsed.id));
-  }
   await db2.update(messages).set({ status: "parsed" }).where(eq(messages.id, messageId));
   const duration3 = Date.now() - startTime;
   await db2.insert(agentActivities).values({
+    tenantId,
     agentName: "parser",
     action: `[${usedGemini ? "Gemini" : "Pattern"}] Intent: ${intent}, Component: ${component}, Severity: ${severityLabel}`,
     targetId: messageId,
@@ -39301,13 +39200,6 @@ async function runParserAgent(messageId) {
 async function runTriageAgent(messageId, parsedResultId) {
   const db2 = getDb();
   const startTime = Date.now();
-  await db2.insert(agentActivities).values({
-    agentName: "triage",
-    action: "Finding similar bugs and calculating priority",
-    targetId: messageId,
-    targetType: "message",
-    status: "running"
-  });
   const parsed = await db2.query.parsedResults.findFirst({
     where: eq(parsedResults.id, parsedResultId)
   });
@@ -39315,40 +39207,45 @@ async function runTriageAgent(messageId, parsedResultId) {
     where: eq(messages.id, messageId)
   });
   if (!parsed || !message3) throw new Error("Data not found");
-  let currentEmbedding = null;
-  try {
-    const ents = parsed.entities;
-    if (ents?.embedding) {
-      currentEmbedding = JSON.parse(ents.embedding);
-    }
-  } catch {
-  }
-  const recentBugs = await db2.query.bugReports.findMany({
-    where: gte(bugReports.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3)),
-    orderBy: [desc(bugReports.createdAt)],
-    limit: 50
+  await db2.insert(agentActivities).values({
+    tenantId: message3.tenantId,
+    agentName: "triage",
+    action: "Finding similar bugs and calculating priority",
+    targetId: messageId,
+    targetType: "message",
+    status: "running"
   });
-  const parsedKeywords = parsed.keywords || [];
+  let currentEmbedding = null;
+  if (parsed.embedding) {
+    currentEmbedding = parsed.embedding;
+  }
   const similar = [];
-  for (const bug2 of recentBugs) {
-    if (bug2.messageId === messageId) continue;
-    let score = 0;
-    if (currentEmbedding) {
-      const bugParsed = await db2.query.parsedResults.findFirst({
-        where: eq(parsedResults.messageId, bug2.messageId)
-      });
-      if (bugParsed) {
-        try {
-          const bugEnts = bugParsed.entities;
-          if (bugEnts?.embedding) {
-            const bugEmbedding = JSON.parse(bugEnts.embedding);
-            score = cosineSimilarity(currentEmbedding, bugEmbedding);
-          }
-        } catch {
-        }
+  const parsedKeywords = parsed.keywords || [];
+  if (currentEmbedding) {
+    const embeddingStr = `[${currentEmbedding.join(",")}]`;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
+    const rows = await db2.select({
+      bugId: bugReports.id,
+      score: sql`1 - (${parsedResults.embedding} <=> ${embeddingStr})`
+    }).from(bugReports).innerJoin(parsedResults, eq(bugReports.parsedResultId, parsedResults.id)).where(
+      and(
+        gte(bugReports.createdAt, thirtyDaysAgo),
+        ne(bugReports.messageId, messageId)
+      )
+    ).orderBy(sql`${parsedResults.embedding} <=> ${embeddingStr}`).limit(5);
+    for (const r of rows) {
+      if (r.score > 0.3) {
+        similar.push({ bugId: r.bugId, score: Math.min(1, r.score), isDuplicate: r.score > 0.85 });
       }
     }
-    if (score === 0) {
+  } else {
+    const recentBugs = await db2.query.bugReports.findMany({
+      where: and(gte(bugReports.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3)), ne(bugReports.messageId, messageId)),
+      orderBy: [desc(bugReports.createdAt)],
+      limit: 50
+    });
+    for (const bug2 of recentBugs) {
+      let score = 0;
       if (bug2.component === parsed.component) score += 0.3;
       const bugMessage = await db2.query.messages.findFirst({
         where: eq(messages.id, bug2.messageId)
@@ -39358,9 +39255,9 @@ async function runTriageAgent(messageId, parsedResultId) {
         const overlap = bugKeywords.filter((k) => parsedKeywords.includes(k)).length;
         score += overlap / Math.max(parsedKeywords.length, 1) * 0.7;
       }
-    }
-    if (score > 0.3) {
-      similar.push({ bugId: bug2.id, score: Math.min(1, score), isDuplicate: score > 0.85 });
+      if (score > 0.3) {
+        similar.push({ bugId: bug2.id, score: Math.min(1, score), isDuplicate: score > 0.85 });
+      }
     }
   }
   similar.sort((a, b2) => b2.score - a.score);
@@ -39379,6 +39276,7 @@ async function runTriageAgent(messageId, parsedResultId) {
   const assigneeHandle = await findAssignee(parsed.component);
   const title = generateTitle(message3.rawContent, parsed.component);
   const [bug] = await db2.insert(bugReports).values({
+    tenantId: message3.tenantId,
     messageId,
     parsedResultId,
     title,
@@ -39392,6 +39290,7 @@ async function runTriageAgent(messageId, parsedResultId) {
   }).returning({ id: bugReports.id });
   for (const sim of top3) {
     await db2.insert(similarBugMatches).values({
+      tenantId: message3.tenantId,
       bugReportId: bug.id,
       similarBugId: sim.bugId,
       similarityScore: sim.score,
@@ -39402,6 +39301,7 @@ async function runTriageAgent(messageId, parsedResultId) {
   const duration3 = Date.now() - startTime;
   const vectorUsed = currentEmbedding !== null;
   await db2.insert(agentActivities).values({
+    tenantId: message3.tenantId,
     agentName: "triage",
     action: `[${vectorUsed ? "Vector" : "Keyword"}] Priority: ${priorityLabel} (${priorityScore}/100), Assigned: ${assigneeHandle}, ${top3.length} similar bugs found`,
     targetId: bug.id,
@@ -39415,17 +39315,18 @@ async function runTriageAgent(messageId, parsedResultId) {
 async function runReproductionAgent(bugId) {
   const db2 = getDb();
   const startTime = Date.now();
+  const bug = await db2.query.bugReports.findFirst({
+    where: eq(bugReports.id, bugId)
+  });
+  if (!bug) throw new Error("Bug not found");
   await db2.insert(agentActivities).values({
+    tenantId: bug.tenantId,
     agentName: "reproduction",
     action: geminiAvailable ? "Generating reproduction steps with Gemini AI..." : "Generating reproduction steps from description",
     targetId: bugId,
     targetType: "bug_report",
     status: "running"
   });
-  const bug = await db2.query.bugReports.findFirst({
-    where: eq(bugReports.id, bugId)
-  });
-  if (!bug) throw new Error("Bug not found");
   const message3 = await db2.query.messages.findFirst({
     where: eq(messages.id, bug.messageId)
   });
@@ -39455,6 +39356,7 @@ async function runReproductionAgent(bugId) {
     errorSummary = result.errorSummary;
   }
   await db2.insert(reproductionSteps).values({
+    tenantId: bug.tenantId,
     bugReportId: bugId,
     steps,
     expectedBehavior: expected,
@@ -39466,6 +39368,7 @@ async function runReproductionAgent(bugId) {
   await db2.update(messages).set({ status: "reproduced" }).where(eq(messages.id, bug.messageId));
   const duration3 = Date.now() - startTime;
   await db2.insert(agentActivities).values({
+    tenantId: bug.tenantId,
     agentName: "reproduction",
     action: `[${usedGemini ? "Gemini" : "Pattern"}] Generated ${steps.length} reproduction steps`,
     targetId: bugId,
@@ -39583,7 +39486,9 @@ async function processMessage(messageId) {
   } catch (error48) {
     const errMsg = error48 instanceof Error ? error48.message : "Unknown error";
     const db2 = getDb();
+    const failMsg = await db2.query.messages.findFirst({ where: eq(messages.id, messageId) });
     await db2.insert(agentActivities).values({
+      tenantId: failMsg?.tenantId ?? 1,
       agentName: "parser",
       action: `Pipeline failed: ${errMsg}`,
       targetId: messageId,
@@ -56963,6 +56868,45 @@ async function createContext(opts) {
 // server/services/webhook-handlers.ts
 init_schema2();
 
+// server/services/queue.ts
+import { createRequire } from "module";
+var _require = createRequire(import.meta.url);
+var PgBoss = _require("pg-boss");
+var boss = null;
+async function initQueue() {
+  const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("Cannot start pg-boss: missing database connection string.");
+  }
+  boss = new PgBoss(connectionString);
+  boss.on("error", (error48) => console.error("pg-boss error:", error48));
+  await boss.start();
+  console.log("pg-boss started successfully");
+  await boss.work("process-message", async (job) => {
+    const { messageId } = job.data;
+    console.log(`[Queue] Processing message ${messageId} (job ${job.id})`);
+    try {
+      await processMessage(messageId);
+      console.log(`[Queue] Finished processing message ${messageId}`);
+    } catch (error48) {
+      console.error(`[Queue] Failed to process message ${messageId}:`, error48);
+      throw error48;
+    }
+  });
+}
+async function enqueueMessageProcessing(messageId) {
+  if (!boss) {
+    throw new Error("pg-boss is not initialized");
+  }
+  const jobId = await boss.send("process-message", { messageId }, {
+    retryLimit: 5,
+    retryDelay: 60
+    // 1 minute
+  });
+  console.log(`[Queue] Enqueued message ${messageId} for processing, jobId: ${jobId}`);
+  return jobId;
+}
+
 // server/services/events.ts
 import { EventEmitter as EventEmitter2 } from "events";
 var SystemEventEmitter = class extends EventEmitter2 {
@@ -57058,11 +57002,11 @@ async function insertAndProcess(payload) {
     status: "pending"
   }).returning({ id: messages.id });
   systemEvents.emit("update");
-  setTimeout(() => {
-    processMessage(result.id).catch(
-      (err) => console.error(`[Webhook] processMessage(${result.id}) failed:`, err)
-    );
-  }, 50);
+  try {
+    await enqueueMessageProcessing(result.id);
+  } catch (err) {
+    console.error(`[Webhook] Failed to enqueue message ${result.id}:`, err);
+  }
   return result.id;
 }
 function createWebhookRouter() {
@@ -57367,6 +57311,9 @@ URL: ${issue2.html_url}`;
 // server/boot.ts
 init_schema2();
 var app = new Hono2();
+void initQueue().catch((err) => {
+  console.error("Failed to initialize queue:", err);
+});
 var webhookRouter = createWebhookRouter();
 app.route("/", webhookRouter);
 app.get(Paths.oauthCallback, createOAuthCallbackHandler());
