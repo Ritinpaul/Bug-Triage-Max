@@ -70534,10 +70534,7 @@ init_schema2();
 var teamRouter = createRouter({
   list: authedQuery.query(async ({ ctx }) => {
     const db2 = getDb();
-    const items = await db2.query.teamMembers.findMany({
-      where: eq(teamMembers.tenantId, ctx.tenantId),
-      orderBy: [desc(teamMembers.createdAt)]
-    });
+    const items = await db2.select().from(teamMembers).where(eq(teamMembers.tenantId, ctx.tenantId)).orderBy(desc(teamMembers.createdAt));
     return items;
   }),
   getByHandle: authedQuery.input(external_exports.object({ handle: external_exports.string() })).query(async ({ input, ctx }) => {
@@ -70784,9 +70781,10 @@ var releaseNotesRouter = createRouter({
       daysRange: external_exports.number().int().min(1).max(365).default(7),
       bugCount: external_exports.number().int().min(0).default(0)
     })
-  ).mutation(async ({ input }) => {
+  ).mutation(async ({ input, ctx }) => {
     const db2 = getDb();
     const [note] = await db2.insert(releaseNotes).values({
+      tenantId: ctx.tenantId,
       tagName: input.tagName,
       name: input.name,
       body: input.body,
