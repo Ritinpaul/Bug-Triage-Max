@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { getDb } from './server/queries/connection';
 import { bugReports, agentActivities, messages } from './db/schema';
 import { desc } from 'drizzle-orm';

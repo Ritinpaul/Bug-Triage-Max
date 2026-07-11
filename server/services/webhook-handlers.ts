@@ -449,6 +449,7 @@ export function createWebhookRouter() {
     if (dup) return c.json({ ok: true, duplicate: true });
     
     const id = await insertAndProcess({
+      tenantId: 1, // Sentry integration defaults to tenant 1 until per-tenant routing is wired up
       source: "form", // using 'form' as generic webhook source since we don't have 'sentry' in schema yet
       rawContent,
       senderId,
@@ -490,6 +491,7 @@ export function createWebhookRouter() {
     if (dup) return c.json({ ok: true, duplicate: true });
     
     const id = await insertAndProcess({
+      tenantId: 1, // GitHub integration defaults to tenant 1 until per-tenant routing is wired up
       source: "form", // mapping to 'form' as generic integration
       rawContent,
       senderId,

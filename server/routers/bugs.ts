@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, authedQuery } from "../middleware";
+import { createRouter, authedQuery, publicQuery } from "../middleware";
 import { getDb, getPg } from "../queries/connection";
 import {
   bugReports,
@@ -18,7 +18,7 @@ import {
 
 export const bugRouter = createRouter({
   // List bugs with filtering
-  list: publicQuery
+  list: authedQuery
     .input(
       z
         .object({
@@ -111,7 +111,7 @@ export const bugRouter = createRouter({
     }),
 
   // Get single bug with full details
-  getById: publicQuery
+  getById: authedQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const pg = getPg();
@@ -146,9 +146,9 @@ export const bugRouter = createRouter({
 
       return {
         bug,
-        message: message || null,
-        parsed: parsed || null,
-        reproduction: repro || null,
+        message: messages[0] || null,
+        parsed: parsed[0] || null,
+        reproduction: repro[0] || null,
         similarBugs: similarEnriched,
       };
     }),

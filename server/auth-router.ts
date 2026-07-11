@@ -87,6 +87,7 @@ export const authRouter = createRouter({
       
       const [result] = await db.insert(messages).values({
         ...msg,
+        tenantId: 1, // Guest demo uses tenant 1
         contentHash,
       }).returning({ id: messages.id });
       

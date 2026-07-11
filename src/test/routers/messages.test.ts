@@ -10,8 +10,8 @@ describe("messages router", () => {
     
     // Seed messages
     await db.insert(messages).values([
-      { source: "slack", rawContent: "Hello", senderId: "1", status: "pending", contentHash: crypto.randomUUID() },
-      { source: "email", rawContent: "World", senderId: "2", status: "parsed", contentHash: crypto.randomUUID() },
+      { tenantId: 1, source: "slack" as const, rawContent: "Hello", senderId: "1", status: "pending", contentHash: crypto.randomUUID() },
+      { tenantId: 1, source: "email" as const, rawContent: "World", senderId: "2", status: "parsed", contentHash: crypto.randomUUID() },
     ]);
 
     const caller = createCaller(createMockContext(undefined));

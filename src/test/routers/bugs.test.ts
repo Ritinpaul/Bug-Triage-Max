@@ -9,6 +9,7 @@ describe("bugs router", () => {
     
     // Create a dummy message
     const [msg] = await db.insert(messages).values({
+      tenantId: 1,
       source: "slack",
       rawContent: "Test bug",
       senderId: "U123",
@@ -17,6 +18,7 @@ describe("bugs router", () => {
     
     // Create parsed result
     const [parsed] = await db.insert(parsedResults).values({
+      tenantId: 1,
       messageId: msg.id,
       intent: "bug_report",
       intentConfidence: 0.9,
@@ -29,6 +31,7 @@ describe("bugs router", () => {
     
     // Create a bug report
     await db.insert(bugReports).values({
+      tenantId: 1,
       messageId: msg.id,
       parsedResultId: parsed.id,
       title: "Test Bug Title",

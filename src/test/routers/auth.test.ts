@@ -12,8 +12,8 @@ describe("auth router", () => {
     const caller = createCaller(createMockContext(user));
     const result = await caller.auth.me();
     expect(result).toBeDefined();
-    expect(result.id).toBe(user.id);
-    expect(result.email).toBe(user.email);
+    expect(result!.id).toBe(user.id);
+    expect(result!.email).toBe(user.email);
   });
 
   it("login should reject invalid credentials", async () => {

@@ -2,7 +2,8 @@ import "dotenv/config";
 
 function required(name: string): string {
   const value = process.env[name];
-  if (!value && process.env.NODE_ENV === "production") {
+  // Only hard-fail in traditional production (not in Vercel Serverless where env vars may not all be set)
+  if (!value && process.env.NODE_ENV === "production" && !process.env.VERCEL) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value || (name.includes("URL") ? "http://localhost:3000" : "");
