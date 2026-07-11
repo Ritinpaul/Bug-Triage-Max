@@ -1,6 +1,4 @@
-import * as PgBossNamespace from "pg-boss";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PgBoss: any = (PgBossNamespace as any).default ?? PgBossNamespace;
+import { PgBoss } from "pg-boss";
 import { processMessage } from "./agent-service";
 import { getDb } from "../queries/connection";
 

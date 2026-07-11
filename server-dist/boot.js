@@ -42154,8 +42154,8 @@ var require_lib2 = __commonJS({
 });
 
 // node_modules/@hono/node-server/dist/index.mjs
-var dist_exports2 = {};
-__export(dist_exports2, {
+var dist_exports = {};
+__export(dist_exports, {
   RequestError: () => RequestError,
   createAdaptorServer: () => createAdaptorServer,
   getRequestListener: () => getRequestListener,
@@ -71194,21 +71194,6 @@ async function createContext(opts) {
 init_schema2();
 
 // node_modules/pg-boss/dist/index.js
-var dist_exports = {};
-__export(dist_exports, {
-  PgBoss: () => PgBoss,
-  events: () => events6,
-  fromDrizzle: () => fromDrizzle,
-  fromKnex: () => fromKnex,
-  fromKysely: () => fromKysely,
-  fromPglite: () => fromPglite,
-  fromPrisma: () => fromPrisma,
-  getConstructionPlans: () => getConstructionPlans,
-  getMigrationPlans: () => getMigrationPlans,
-  getRollbackPlans: () => getRollbackPlans,
-  policies: () => QUEUE_POLICIES,
-  states: () => JOB_STATES
-});
 import EventEmitter9 from "node:events";
 
 // node_modules/pg-boss/dist/attorney.js
@@ -80594,102 +80579,6 @@ var Db = class extends EventEmitter8 {
 };
 var db_default = Db;
 
-// node_modules/pg-boss/dist/adapters/placeholders.js
-function parsePlaceholders(text2, values2) {
-  const parts = [];
-  const reordered = [];
-  const re = /\$(\d+)/g;
-  let lastIndex = 0;
-  let match2;
-  while ((match2 = re.exec(text2)) !== null) {
-    parts.push(text2.slice(lastIndex, match2.index));
-    reordered.push(values2?.[Number(match2[1]) - 1]);
-    lastIndex = re.lastIndex;
-  }
-  parts.push(text2.slice(lastIndex));
-  return { parts, reordered };
-}
-
-// node_modules/pg-boss/dist/adapters/knex.js
-function fromKnex(trx) {
-  return {
-    async executeSql(text2, values2) {
-      const { parts, reordered } = parsePlaceholders(text2, values2);
-      const knexSql = parts.map((part) => part.replace(/\?/g, "\\?")).join("?");
-      return unwrapSQLResult(await trx.raw(knexSql, reordered));
-    }
-  };
-}
-
-// node_modules/pg-boss/dist/adapters/kysely.js
-function fromKysely(trx) {
-  return {
-    async executeSql(text2, values2) {
-      const result = await trx.executeQuery({
-        sql: text2,
-        parameters: values2 ?? [],
-        query: { kind: "RawNode" },
-        queryId: { queryId: "pgboss" }
-      });
-      return { rows: [...result.rows] };
-    }
-  };
-}
-
-// node_modules/pg-boss/dist/adapters/drizzle.js
-function fromDrizzle(tx, sql2) {
-  return {
-    async executeSql(text2, values2) {
-      const { parts, reordered } = parsePlaceholders(text2, values2);
-      const strings = Object.assign([...parts], { raw: [...parts] });
-      const params = reordered.map((value) => sql2.param(value));
-      return unwrapSQLResult(await tx.execute(sql2(strings, ...params)));
-    }
-  };
-}
-
-// node_modules/pg-boss/dist/adapters/prisma.js
-function fromPrisma(tx) {
-  return {
-    async executeSql(text2, values2) {
-      const rows = await tx.$queryRawUnsafe(text2, ...values2 ?? []);
-      return { rows: Array.isArray(rows) ? rows : [] };
-    }
-  };
-}
-
-// node_modules/pg-boss/dist/adapters/pglite.js
-function fromPglite(pglite) {
-  const run3 = async (text2, values2) => {
-    if (values2?.length) {
-      return await pglite.query(text2, values2);
-    }
-    const results = await pglite.exec(text2);
-    return { rows: results.flatMap((r) => r.rows ?? []) };
-  };
-  const db2 = {
-    async executeSql(text2, values2) {
-      try {
-        return await run3(text2, values2);
-      } catch (err) {
-        await pglite.query("ROLLBACK").catch(() => {
-        });
-        throw err;
-      }
-    }
-  };
-  if (typeof pglite.listen === "function") {
-    db2.listen = async (channel, onNotification, onReconnect) => {
-      const unsubscribe2 = await pglite.listen(channel, onNotification);
-      onReconnect();
-      return { close: async () => {
-        await unsubscribe2();
-      } };
-    };
-  }
-  return db2;
-}
-
 // node_modules/pg-boss/dist/index.js
 var events6 = Object.freeze({
   error: "error",
@@ -80699,15 +80588,6 @@ var events6 = Object.freeze({
   bam: "bam",
   flow: "flow"
 });
-function getConstructionPlans(schema) {
-  return contractor_default.constructionPlans(schema);
-}
-function getMigrationPlans(schema, version4, options) {
-  return contractor_default.migrationPlans(schema, version4, options);
-}
-function getRollbackPlans(schema, version4) {
-  return contractor_default.rollbackPlans(schema, version4);
-}
 var PgBoss = class extends EventEmitter9 {
   #stoppingOn;
   #stopped;
@@ -81061,14 +80941,13 @@ var PgBoss = class extends EventEmitter9 {
 };
 
 // server/services/queue.ts
-var PgBoss2 = void 0 ?? dist_exports;
 var boss = null;
 async function initQueue() {
   const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("Cannot start pg-boss: missing database connection string.");
   }
-  boss = new PgBoss2(connectionString);
+  boss = new PgBoss(connectionString);
   boss.on("error", (error48) => console.error("pg-boss error:", error48));
   await boss.start();
   console.log("pg-boss started successfully");
@@ -81570,7 +81449,7 @@ app.use("/api/trpc/*", async (c) => {
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 var boot_default = app;
 if (env.isProduction && !process.env.VERCEL) {
-  const { serve: serve2 } = await Promise.resolve().then(() => (init_dist(), dist_exports2));
+  const { serve: serve2 } = await Promise.resolve().then(() => (init_dist(), dist_exports));
   const { serveStaticFiles: serveStaticFiles2 } = await Promise.resolve().then(() => (init_vite(), vite_exports));
   serveStaticFiles2(app);
   const port = parseInt(process.env.PORT || "3000");
