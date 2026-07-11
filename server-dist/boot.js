@@ -366,14 +366,14 @@ var require_main = __commonJS({
       }
       return DotenvModule.parse(decrypted);
     }
-    function _warn(message3) {
-      console.error(`\u26A0 ${message3}`);
+    function _warn(message2) {
+      console.error(`\u26A0 ${message2}`);
     }
-    function _debug(message3) {
-      console.log(`\u2506 ${message3}`);
+    function _debug(message2) {
+      console.log(`\u2506 ${message2}`);
     }
-    function _log(message3) {
-      console.log(`\u25C7 ${message3}`);
+    function _log(message2) {
+      console.log(`\u25C7 ${message2}`);
     }
     function _dotenvKey(options) {
       if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
@@ -2026,8 +2026,8 @@ var init_errors = __esm({
     init_entity();
     DrizzleError = class extends Error {
       static [entityKind] = "DrizzleError";
-      constructor({ message: message3, cause }) {
-        super(message3);
+      constructor({ message: message2, cause }) {
+        super(message2);
         this.name = "DrizzleError";
         this.cause = cause;
       }
@@ -39204,8 +39204,8 @@ var require_messages = __commonJS({
       length: 4
     };
     var DatabaseError2 = class extends Error {
-      constructor(message3, length, name) {
-        super(message3);
+      constructor(message2, length, name) {
+        super(message2);
         this.length = length;
         this.name = name;
       }
@@ -39320,9 +39320,9 @@ var require_messages = __commonJS({
     };
     exports.DataRowMessage = DataRowMessage;
     var NoticeMessage = class {
-      constructor(length, message3) {
+      constructor(length, message2) {
         this.length = length;
-        this.message = message3;
+        this.message = message2;
         this.name = "notice";
       }
     };
@@ -39612,8 +39612,8 @@ var require_serializer = __commonJS({
         /* code.copyFromChunk */
       );
     };
-    var copyFail = (message3) => {
-      return cstringMessage(102, message3);
+    var copyFail = (message2) => {
+      return cstringMessage(102, message2);
     };
     var codeOnlyBuffer = (code) => Buffer.from([code, 0, 0, 0, 4]);
     var flushBuffer = codeOnlyBuffer(
@@ -39748,8 +39748,8 @@ var require_parser = __commonJS({
           const length = this.buffer.readUInt32BE(offset + CODE_LENGTH);
           const fullMessageLength = CODE_LENGTH + length;
           if (fullMessageLength + offset <= bufferFullLength) {
-            const message3 = this.handlePacket(offset + HEADER_LENGTH, code, length, this.buffer);
-            callback(message3);
+            const message2 = this.handlePacket(offset + HEADER_LENGTH, code, length, this.buffer);
+            callback(message2);
             offset += fullMessageLength;
           } else {
             break;
@@ -39794,80 +39794,80 @@ var require_parser = __commonJS({
       handlePacket(offset, code, length, bytes) {
         const { reader } = this;
         reader.setBuffer(offset, bytes);
-        let message3;
+        let message2;
         switch (code) {
           case 50:
-            message3 = messages_1.bindComplete;
+            message2 = messages_1.bindComplete;
             break;
           case 49:
-            message3 = messages_1.parseComplete;
+            message2 = messages_1.parseComplete;
             break;
           case 51:
-            message3 = messages_1.closeComplete;
+            message2 = messages_1.closeComplete;
             break;
           case 110:
-            message3 = messages_1.noData;
+            message2 = messages_1.noData;
             break;
           case 115:
-            message3 = messages_1.portalSuspended;
+            message2 = messages_1.portalSuspended;
             break;
           case 99:
-            message3 = messages_1.copyDone;
+            message2 = messages_1.copyDone;
             break;
           case 87:
-            message3 = messages_1.replicationStart;
+            message2 = messages_1.replicationStart;
             break;
           case 73:
-            message3 = messages_1.emptyQuery;
+            message2 = messages_1.emptyQuery;
             break;
           case 68:
-            message3 = parseDataRowMessage(reader);
+            message2 = parseDataRowMessage(reader);
             break;
           case 67:
-            message3 = parseCommandCompleteMessage(reader);
+            message2 = parseCommandCompleteMessage(reader);
             break;
           case 90:
-            message3 = parseReadyForQueryMessage(reader);
+            message2 = parseReadyForQueryMessage(reader);
             break;
           case 65:
-            message3 = parseNotificationMessage(reader);
+            message2 = parseNotificationMessage(reader);
             break;
           case 82:
-            message3 = parseAuthenticationResponse(reader, length);
+            message2 = parseAuthenticationResponse(reader, length);
             break;
           case 83:
-            message3 = parseParameterStatusMessage(reader);
+            message2 = parseParameterStatusMessage(reader);
             break;
           case 75:
-            message3 = parseBackendKeyData(reader);
+            message2 = parseBackendKeyData(reader);
             break;
           case 69:
-            message3 = parseErrorMessage(reader, "error");
+            message2 = parseErrorMessage(reader, "error");
             break;
           case 78:
-            message3 = parseErrorMessage(reader, "notice");
+            message2 = parseErrorMessage(reader, "notice");
             break;
           case 84:
-            message3 = parseRowDescriptionMessage(reader);
+            message2 = parseRowDescriptionMessage(reader);
             break;
           case 116:
-            message3 = parseParameterDescriptionMessage(reader);
+            message2 = parseParameterDescriptionMessage(reader);
             break;
           case 71:
-            message3 = parseCopyInMessage(reader);
+            message2 = parseCopyInMessage(reader);
             break;
           case 72:
-            message3 = parseCopyOutMessage(reader);
+            message2 = parseCopyOutMessage(reader);
             break;
           case 100:
-            message3 = parseCopyData(reader, length);
+            message2 = parseCopyData(reader, length);
             break;
           default:
             return new messages_1.DatabaseError("received invalid response: " + code.toString(16), length, "error");
         }
         reader.setBuffer(0, emptyBuffer);
-        message3.length = length;
-        return message3;
+        message2.length = length;
+        return message2;
       }
     };
     exports.Parser = Parser;
@@ -39888,11 +39888,11 @@ var require_parser = __commonJS({
     var parseCopyMessage = (reader, messageName) => {
       const isBinary = reader.byte() !== 0;
       const columnCount = reader.int16();
-      const message3 = new messages_1.CopyResponse(LATEINIT_LENGTH, messageName, isBinary, columnCount);
+      const message2 = new messages_1.CopyResponse(LATEINIT_LENGTH, messageName, isBinary, columnCount);
       for (let i = 0; i < columnCount; i++) {
-        message3.columnTypes[i] = reader.int16();
+        message2.columnTypes[i] = reader.int16();
       }
-      return message3;
+      return message2;
     };
     var parseNotificationMessage = (reader) => {
       const processId = reader.int32();
@@ -39902,11 +39902,11 @@ var require_parser = __commonJS({
     };
     var parseRowDescriptionMessage = (reader) => {
       const fieldCount = reader.int16();
-      const message3 = new messages_1.RowDescriptionMessage(LATEINIT_LENGTH, fieldCount);
+      const message2 = new messages_1.RowDescriptionMessage(LATEINIT_LENGTH, fieldCount);
       for (let i = 0; i < fieldCount; i++) {
-        message3.fields[i] = parseField(reader);
+        message2.fields[i] = parseField(reader);
       }
-      return message3;
+      return message2;
     };
     var parseField = (reader) => {
       const name = reader.cstring();
@@ -39920,11 +39920,11 @@ var require_parser = __commonJS({
     };
     var parseParameterDescriptionMessage = (reader) => {
       const parameterCount = reader.int16();
-      const message3 = new messages_1.ParameterDescriptionMessage(LATEINIT_LENGTH, parameterCount);
+      const message2 = new messages_1.ParameterDescriptionMessage(LATEINIT_LENGTH, parameterCount);
       for (let i = 0; i < parameterCount; i++) {
-        message3.dataTypeIDs[i] = reader.int32();
+        message2.dataTypeIDs[i] = reader.int32();
       }
-      return message3;
+      return message2;
     };
     var parseDataRowMessage = (reader) => {
       const fieldCount = reader.int16();
@@ -39947,7 +39947,7 @@ var require_parser = __commonJS({
     };
     var parseAuthenticationResponse = (reader, length) => {
       const code = reader.int32();
-      const message3 = {
+      const message2 = {
         name: "authenticationOk",
         length
       };
@@ -39955,42 +39955,42 @@ var require_parser = __commonJS({
         case 0:
           break;
         case 3:
-          if (message3.length === 8) {
-            message3.name = "authenticationCleartextPassword";
+          if (message2.length === 8) {
+            message2.name = "authenticationCleartextPassword";
           }
           break;
         case 5:
-          if (message3.length === 12) {
-            message3.name = "authenticationMD5Password";
+          if (message2.length === 12) {
+            message2.name = "authenticationMD5Password";
             const salt = reader.bytes(4);
             return new messages_1.AuthenticationMD5Password(LATEINIT_LENGTH, salt);
           }
           break;
         case 10:
           {
-            message3.name = "authenticationSASL";
-            message3.mechanisms = [];
+            message2.name = "authenticationSASL";
+            message2.mechanisms = [];
             let mechanism;
             do {
               mechanism = reader.cstring();
               if (mechanism) {
-                message3.mechanisms.push(mechanism);
+                message2.mechanisms.push(mechanism);
               }
             } while (mechanism);
           }
           break;
         case 11:
-          message3.name = "authenticationSASLContinue";
-          message3.data = reader.string(length - 8);
+          message2.name = "authenticationSASLContinue";
+          message2.data = reader.string(length - 8);
           break;
         case 12:
-          message3.name = "authenticationSASLFinal";
-          message3.data = reader.string(length - 8);
+          message2.name = "authenticationSASLFinal";
+          message2.data = reader.string(length - 8);
           break;
         default:
           throw new Error("Unknown authenticationOk message type " + code);
       }
-      return message3;
+      return message2;
     };
     var parseErrorMessage = (reader, name) => {
       const fields = {};
@@ -40000,24 +40000,24 @@ var require_parser = __commonJS({
         fieldType = reader.string(1);
       }
       const messageValue = fields.M;
-      const message3 = name === "notice" ? new messages_1.NoticeMessage(LATEINIT_LENGTH, messageValue) : new messages_1.DatabaseError(messageValue, LATEINIT_LENGTH, name);
-      message3.severity = fields.S;
-      message3.code = fields.C;
-      message3.detail = fields.D;
-      message3.hint = fields.H;
-      message3.position = fields.P;
-      message3.internalPosition = fields.p;
-      message3.internalQuery = fields.q;
-      message3.where = fields.W;
-      message3.schema = fields.s;
-      message3.table = fields.t;
-      message3.column = fields.c;
-      message3.dataType = fields.d;
-      message3.constraint = fields.n;
-      message3.file = fields.F;
-      message3.line = fields.L;
-      message3.routine = fields.R;
-      return message3;
+      const message2 = name === "notice" ? new messages_1.NoticeMessage(LATEINIT_LENGTH, messageValue) : new messages_1.DatabaseError(messageValue, LATEINIT_LENGTH, name);
+      message2.severity = fields.S;
+      message2.code = fields.C;
+      message2.detail = fields.D;
+      message2.hint = fields.H;
+      message2.position = fields.P;
+      message2.internalPosition = fields.p;
+      message2.internalQuery = fields.q;
+      message2.where = fields.W;
+      message2.schema = fields.s;
+      message2.table = fields.t;
+      message2.column = fields.c;
+      message2.dataType = fields.d;
+      message2.constraint = fields.n;
+      message2.file = fields.F;
+      message2.line = fields.L;
+      message2.routine = fields.R;
+      return message2;
     };
   }
 });
@@ -42215,8 +42215,8 @@ var RequestError, toRequestError, GlobalRequest, Request2, newHeadersFromIncomin
 var init_dist = __esm({
   "node_modules/@hono/node-server/dist/index.mjs"() {
     RequestError = class extends Error {
-      constructor(message3, options) {
-        super(message3, options);
+      constructor(message2, options) {
+        super(message2, options);
         this.name = "RequestError";
       }
     };
@@ -45229,21 +45229,21 @@ var SSEStreamingApi = class extends StreamingApi {
   constructor(writable, readable) {
     super(writable, readable);
   }
-  async writeSSE(message3) {
-    const data = await resolveCallback(message3.data, HtmlEscapedCallbackPhase.Stringify, false, {});
+  async writeSSE(message2) {
+    const data = await resolveCallback(message2.data, HtmlEscapedCallbackPhase.Stringify, false, {});
     const dataLines = data.split(/\r\n|\r|\n/).map((line2) => {
       return `data: ${line2}`;
     }).join("\n");
     for (const key of ["event", "id", "retry"]) {
-      if (message3[key] && /[\r\n]/.test(message3[key])) {
+      if (message2[key] && /[\r\n]/.test(message2[key])) {
         throw new Error(`${key} must not contain "\\r" or "\\n"`);
       }
     }
     const sseData = [
-      message3.event && `event: ${message3.event}`,
+      message2.event && `event: ${message2.event}`,
       dataLines,
-      message3.id && `id: ${message3.id}`,
-      message3.retry && `retry: ${message3.retry}`
+      message2.id && `id: ${message2.id}`,
+      message2.retry && `retry: ${message2.retry}`
     ].filter(Boolean).join("\n") + "\n\n";
     await this.write(sseData);
   }
@@ -45609,8 +45609,8 @@ var TRPCError = class extends Error {
   constructor(opts) {
     var _ref, _opts$message, _this$cause;
     const cause = getCauseFromUnknown(opts.cause);
-    const message3 = (_ref = (_opts$message = opts.message) !== null && _opts$message !== void 0 ? _opts$message : cause === null || cause === void 0 ? void 0 : cause.message) !== null && _ref !== void 0 ? _ref : opts.code;
-    super(message3, { cause });
+    const message2 = (_ref = (_opts$message = opts.message) !== null && _opts$message !== void 0 ? _opts$message : cause === null || cause === void 0 ? void 0 : cause.message) !== null && _ref !== void 0 ? _ref : opts.code;
+    super(message2, { cause });
     (0, import_defineProperty.default)(this, "cause", void 0);
     (0, import_defineProperty.default)(this, "code", void 0);
     this.code = opts.code;
@@ -46130,8 +46130,8 @@ async function getRequestInfo(opts) {
 function isAbortError(error48) {
   return isObject(error48) && error48["name"] === "AbortError";
 }
-function throwAbortError(message3 = "AbortError") {
-  throw new DOMException(message3, "AbortError");
+function throwAbortError(message2 = "AbortError") {
+  throw new DOMException(message2, "AbortError");
 }
 function isObject$1(o) {
   return Object.prototype.toString.call(o) === "[object Object]";
@@ -48793,7 +48793,7 @@ var rateLimitMiddleware = (limit, windowMs) => t.middleware(async ({ ctx, next: 
   return next2();
 });
 var createRouter = t.router;
-var publicQuery2 = t.procedure;
+var publicQuery = t.procedure;
 var createCallerFactory2 = t.createCallerFactory;
 var requireAuth = t.middleware(async (opts) => {
   const { ctx, next: next2 } = opts;
@@ -48913,8 +48913,8 @@ function encode2(input) {
 var JOSEError = class extends Error {
   static code = "ERR_JOSE_GENERIC";
   code = "ERR_JOSE_GENERIC";
-  constructor(message3, options) {
-    super(message3, options);
+  constructor(message2, options) {
+    super(message2, options);
     this.name = this.constructor.name;
     Error.captureStackTrace?.(this, this.constructor);
   }
@@ -48925,8 +48925,8 @@ var JWTClaimValidationFailed = class extends JOSEError {
   claim;
   reason;
   payload;
-  constructor(message3, payload, claim = "unspecified", reason = "unspecified") {
-    super(message3, { cause: { claim, reason, payload } });
+  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+    super(message2, { cause: { claim, reason, payload } });
     this.claim = claim;
     this.reason = reason;
     this.payload = payload;
@@ -48938,8 +48938,8 @@ var JWTExpired = class extends JOSEError {
   claim;
   reason;
   payload;
-  constructor(message3, payload, claim = "unspecified", reason = "unspecified") {
-    super(message3, { cause: { claim, reason, payload } });
+  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+    super(message2, { cause: { claim, reason, payload } });
     this.claim = claim;
     this.reason = reason;
     this.payload = payload;
@@ -48968,30 +48968,30 @@ var JWKSInvalid = class extends JOSEError {
 var JWKSNoMatchingKey = class extends JOSEError {
   static code = "ERR_JWKS_NO_MATCHING_KEY";
   code = "ERR_JWKS_NO_MATCHING_KEY";
-  constructor(message3 = "no applicable key found in the JSON Web Key Set", options) {
-    super(message3, options);
+  constructor(message2 = "no applicable key found in the JSON Web Key Set", options) {
+    super(message2, options);
   }
 };
 var JWKSMultipleMatchingKeys = class extends JOSEError {
   [Symbol.asyncIterator];
   static code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
   code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
-  constructor(message3 = "multiple matching keys found in the JSON Web Key Set", options) {
-    super(message3, options);
+  constructor(message2 = "multiple matching keys found in the JSON Web Key Set", options) {
+    super(message2, options);
   }
 };
 var JWKSTimeout = class extends JOSEError {
   static code = "ERR_JWKS_TIMEOUT";
   code = "ERR_JWKS_TIMEOUT";
-  constructor(message3 = "request timed out", options) {
-    super(message3, options);
+  constructor(message2 = "request timed out", options) {
+    super(message2, options);
   }
 };
 var JWSSignatureVerificationFailed = class extends JOSEError {
   static code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
   code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
-  constructor(message3 = "signature verification failed", options) {
-    super(message3, options);
+  constructor(message2 = "signature verification failed", options) {
+    super(message2, options);
   }
 };
 
@@ -49084,7 +49084,7 @@ function checkSigCryptoKey(key, alg, usage) {
 }
 
 // node_modules/jose/dist/webapi/lib/invalid_key_input.js
-function message2(msg, actual, ...types3) {
+function message(msg, actual, ...types3) {
   types3 = types3.filter(Boolean);
   if (types3.length > 2) {
     const last = types3.pop();
@@ -49105,8 +49105,8 @@ function message2(msg, actual, ...types3) {
   }
   return msg;
 }
-var invalidKeyInput = (actual, ...types3) => message2("Key must be ", actual, ...types3);
-var withAlg = (alg, actual, ...types3) => message2(`Key for the ${alg} algorithm must be `, actual, ...types3);
+var invalidKeyInput = (actual, ...types3) => message("Key must be ", actual, ...types3);
+var withAlg = (alg, actual, ...types3) => message(`Key for the ${alg} algorithm must be `, actual, ...types3);
 
 // node_modules/jose/dist/webapi/lib/is_key_like.js
 var isCryptoKey = (key) => {
@@ -50524,7 +50524,7 @@ function createRemoteJWKSet(url2, options) {
 // server/lib/env.ts
 function required(name) {
   const value = process.env[name];
-  if (!value && process.env.NODE_ENV === "production") {
+  if (!value && process.env.NODE_ENV === "production" && !process.env.VERCEL) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value || (name.includes("URL") ? "http://localhost:3000" : "");
@@ -50593,8 +50593,8 @@ async function verifySessionToken(token) {
 init_entity();
 var ConsoleLogWriter = class {
   static [entityKind] = "ConsoleLogWriter";
-  write(message3) {
-    console.log(message3);
+  write(message2) {
+    console.log(message2);
   }
 };
 var DefaultLogger = class {
@@ -50798,8 +50798,8 @@ function postgres(x) {
   Error.captureStackTrace(error48, postgres);
   return error48;
 }
-function generic(code, message3) {
-  const error48 = Object.assign(new Error(code + ": " + message3), { code });
+function generic(code, message2) {
+  const error48 = Object.assign(new Error(code + ": " + message2), { code });
   Error.captureStackTrace(error48, generic);
   return error48;
 }
@@ -53430,11 +53430,11 @@ async function runParserAgent(messageId) {
     targetType: "message",
     status: "running"
   });
-  const message3 = earlyMessage;
+  const message2 = earlyMessage;
   if (!geminiAvailable) {
     throw new Error("Gemini API is required for agent processing. Please configure the GEMINI_API_KEY environment variable.");
   }
-  const geminiResult = await parseMessageWithGemini(message3.rawContent);
+  const geminiResult = await parseMessageWithGemini(message2.rawContent);
   if (!geminiResult) {
     throw new Error("Gemini API failed to parse message.");
   }
@@ -53447,10 +53447,10 @@ async function runParserAgent(messageId) {
   const keywords = geminiResult.keywords;
   const usedGemini = true;
   const overallConfidence = (intentConfidence + componentConfidence) / 2;
-  const embeddingText = `${message3.rawContent} component:${component} intent:${intent}`;
+  const embeddingText = `${message2.rawContent} component:${component} intent:${intent}`;
   const embedding = await generateEmbedding(embeddingText);
   const [parsed] = await db2.insert(parsedResults).values({
-    tenantId: message3.tenantId,
+    tenantId: message2.tenantId,
     messageId,
     intent,
     intentConfidence,
@@ -53461,7 +53461,7 @@ async function runParserAgent(messageId) {
     overallConfidence,
     keywords,
     entities: {
-      ...extractEntities(message3.rawContent),
+      ...extractEntities(message2.rawContent),
       engine: usedGemini ? "gemini" : "pattern"
     },
     embedding: embedding ?? null,
@@ -53487,8 +53487,8 @@ async function runParserAgent(messageId) {
   if (lemmaAvailable) {
     writeBugReportToLemma({
       message_id: String(messageId),
-      raw_content: message3.rawContent,
-      source: message3.source ?? "form",
+      raw_content: message2.rawContent,
+      source: message2.source ?? "form",
       status: "parsing",
       intent,
       component,
@@ -53528,12 +53528,12 @@ async function runTriageAgent(messageId, parsedResultId) {
   const parsed = await db2.query.parsedResults.findFirst({
     where: eq(parsedResults.id, parsedResultId)
   });
-  const message3 = await db2.query.messages.findFirst({
+  const message2 = await db2.query.messages.findFirst({
     where: eq(messages.id, messageId)
   });
-  if (!parsed || !message3) throw new Error("Data not found");
+  if (!parsed || !message2) throw new Error("Data not found");
   await db2.insert(agentActivities).values({
-    tenantId: message3.tenantId,
+    tenantId: message2.tenantId,
     agentName: "triage",
     action: "Finding similar bugs and calculating priority",
     targetId: messageId,
@@ -53599,14 +53599,14 @@ async function runTriageAgent(messageId, parsedResultId) {
   else if (priorityScore >= 60) priorityLabel = "P1";
   else if (priorityScore >= 40) priorityLabel = "P2";
   const assigneeHandle = await findAssignee(parsed.component);
-  const title = generateTitle(message3.rawContent, parsed.component);
+  const title = generateTitle(message2.rawContent, parsed.component);
   const [bug] = await db2.insert(bugReports).values({
-    tenantId: message3.tenantId,
+    tenantId: message2.tenantId,
     messageId,
     parsedResultId,
     title,
-    description: message3.rawContent,
-    source: message3.source,
+    description: message2.rawContent,
+    source: message2.source,
     component: parsed.component,
     severity: parsed.severityLabel,
     priorityScore,
@@ -53615,7 +53615,7 @@ async function runTriageAgent(messageId, parsedResultId) {
   }).returning({ id: bugReports.id });
   for (const sim of top3) {
     await db2.insert(similarBugMatches).values({
-      tenantId: message3.tenantId,
+      tenantId: message2.tenantId,
       bugReportId: bug.id,
       similarBugId: sim.bugId,
       similarityScore: sim.score,
@@ -53626,7 +53626,7 @@ async function runTriageAgent(messageId, parsedResultId) {
   const duration3 = Date.now() - startTime;
   const vectorUsed = currentEmbedding !== null;
   await db2.insert(agentActivities).values({
-    tenantId: message3.tenantId,
+    tenantId: message2.tenantId,
     agentName: "triage",
     action: `[${vectorUsed ? "Vector" : "Keyword"}] Priority: ${priorityLabel} (${priorityScore}/100), Assigned: ${assigneeHandle}, ${top3.length} similar bugs found`,
     targetId: bug.id,
@@ -53652,10 +53652,10 @@ async function runReproductionAgent(bugId) {
     targetType: "bug_report",
     status: "running"
   });
-  const message3 = await db2.query.messages.findFirst({
+  const message2 = await db2.query.messages.findFirst({
     where: eq(messages.id, bug.messageId)
   });
-  const content = message3?.rawContent || bug.description;
+  const content = message2?.rawContent || bug.description;
   let steps;
   let expected;
   let actual;
@@ -54999,14 +54999,14 @@ function prefixIssues(path2, issues) {
     return iss;
   });
 }
-function unwrapMessage(message3) {
-  return typeof message3 === "string" ? message3 : message3?.message;
+function unwrapMessage(message2) {
+  return typeof message2 === "string" ? message2 : message2?.message;
 }
 function finalizeIssue(iss, ctx, config2) {
   const full = { ...iss, path: iss.path ?? [] };
   if (!iss.message) {
-    const message3 = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
-    full.message = message3;
+    const message2 = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
+    full.message = message2;
   }
   delete full.inst;
   delete full.continue;
@@ -69346,7 +69346,7 @@ var authRouter = createRouter({
     );
     return { success: true };
   }),
-  guestLogin: publicQuery2.use(rateLimitMiddleware(5, 15 * 60 * 1e3)).mutation(async ({ ctx }) => {
+  guestLogin: publicQuery.use(rateLimitMiddleware(5, 15 * 60 * 1e3)).mutation(async ({ ctx }) => {
     const guestId = `guest-${crypto3.randomUUID()}`;
     await upsertUser({
       unionId: guestId,
@@ -69394,6 +69394,8 @@ var authRouter = createRouter({
       const contentHash = Array.from(new Uint8Array(hashBuffer)).map((b2) => b2.toString(16).padStart(2, "0")).join("");
       const [result] = await db2.insert(messages).values({
         ...msg,
+        tenantId: 1,
+        // Guest demo uses tenant 1
         contentHash
       }).returning({ id: messages.id });
       setTimeout(() => {
@@ -69402,7 +69404,7 @@ var authRouter = createRouter({
     }
     return { success: true };
   }),
-  register: publicQuery2.use(rateLimitMiddleware(5, 15 * 60 * 1e3)).input(external_exports.object({
+  register: publicQuery.use(rateLimitMiddleware(5, 15 * 60 * 1e3)).input(external_exports.object({
     name: external_exports.string().min(1, "Name is required"),
     email: external_exports.string().email("Invalid email"),
     password: external_exports.string().min(6, "Password must be at least 6 characters")
@@ -69432,7 +69434,7 @@ var authRouter = createRouter({
     );
     return { success: true };
   }),
-  login: publicQuery2.use(rateLimitMiddleware(10, 15 * 60 * 1e3)).input(external_exports.object({
+  login: publicQuery.use(rateLimitMiddleware(10, 15 * 60 * 1e3)).input(external_exports.object({
     email: external_exports.string().email("Invalid email"),
     password: external_exports.string().min(1, "Password is required")
   })).mutation(async ({ input, ctx }) => {
@@ -69462,7 +69464,7 @@ var authRouter = createRouter({
 import { createHash } from "node:crypto";
 var messageRouter = createRouter({
   // List messages with optional filtering
-  list: publicQuery2.input(
+  list: publicQuery.input(
     external_exports.object({
       source: external_exports.enum(["slack", "email", "form", "all"]).optional().default("all"),
       status: external_exports.string().optional(),
@@ -69517,7 +69519,7 @@ var messageRouter = createRouter({
     };
   }),
   // Get single message with related data
-  getById: publicQuery2.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
+  getById: publicQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
     const pg2 = getPg();
     const msgs = await pg2`SELECT * FROM messages WHERE id = ${input.id} LIMIT 1`;
     if (!msgs[0]) return null;
@@ -69531,7 +69533,7 @@ var messageRouter = createRouter({
     };
   }),
   // Create new message (simulates webhook ingestion)
-  create: publicQuery2.input(
+  create: publicQuery.input(
     external_exports.object({
       source: external_exports.enum(["slack", "email", "form"]),
       rawContent: external_exports.string().min(1),
@@ -69563,7 +69565,7 @@ var messageRouter = createRouter({
     return { id, duplicate: false };
   }),
   // Stats for dashboard
-  stats: publicQuery2.query(async () => {
+  stats: publicQuery.query(async () => {
     const pg2 = getPg();
     const result = await pg2`
       SELECT
@@ -69588,7 +69590,7 @@ var messageRouter = createRouter({
     };
   }),
   // Recent messages stream (for real-time dashboard)
-  recent: publicQuery2.input(external_exports.object({
+  recent: publicQuery.input(external_exports.object({
     limit: external_exports.number().optional().default(20),
     source: external_exports.enum(["slack", "email", "form", "all"]).optional().default("all")
   }).optional()).query(async ({ input }) => {
@@ -69757,7 +69759,7 @@ var githubConfigured = !!(GITHUB_PAT && GITHUB_OWNER && GITHUB_REPO);
 // server/routers/bugs.ts
 var bugRouter = createRouter({
   // List bugs with filtering
-  list: publicQuery.input(
+  list: authedQuery.input(
     external_exports.object({
       status: external_exports.enum(["open", "in_progress", "resolved", "closed", "all"]).optional().default("all"),
       component: external_exports.string().optional(),
@@ -69826,7 +69828,7 @@ var bugRouter = createRouter({
     return { items: enriched, total };
   }),
   // Get single bug with full details
-  getById: publicQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
+  getById: authedQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
     const pg2 = getPg();
     const bugs = await pg2`SELECT * FROM bug_reports WHERE id = ${input.id} LIMIT 1`;
     if (!bugs[0]) return null;
@@ -69851,9 +69853,9 @@ var bugRouter = createRouter({
     );
     return {
       bug,
-      message: message || null,
-      parsed: parsed || null,
-      reproduction: repro || null,
+      message: messages3[0] || null,
+      parsed: parsed[0] || null,
+      reproduction: repro[0] || null,
       similarBugs: similarEnriched
     };
   }),
@@ -69908,10 +69910,10 @@ var bugRouter = createRouter({
         alreadyExists: true
       };
     }
-    const message3 = bug.messageId ? await db2.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
+    const message2 = bug.messageId ? await db2.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
     const parsed = bug.parsedResultId ? await db2.query.parsedResults.findFirst({ where: eq(parsedResults.id, bug.parsedResultId) }) : null;
     const repro = await db2.query.reproductionSteps.findFirst({ where: eq(reproductionSteps.bugReportId, input.id) });
-    const body = buildGithubIssueBody({ bug, message: message3, parsed, repro });
+    const body = buildGithubIssueBody({ bug, message: message2, parsed, repro });
     const labels = ["bug", bug.severity.toLowerCase(), bug.component].filter(Boolean);
     const { number: number4, url: url2 } = await createGitHubIssue({
       title: bug.title,
@@ -69928,15 +69930,15 @@ var bugRouter = createRouter({
       where: and(eq(bugReports.id, input.id), eq(bugReports.tenantId, ctx.tenantId))
     });
     if (!bug) return null;
-    const message3 = bug.messageId ? await db2.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
+    const message2 = bug.messageId ? await db2.query.messages.findFirst({ where: eq(messages.id, bug.messageId) }) : null;
     const parsed = bug.parsedResultId ? await db2.query.parsedResults.findFirst({ where: eq(parsedResults.id, bug.parsedResultId) }) : null;
     const repro = await db2.query.reproductionSteps.findFirst({ where: eq(reproductionSteps.bugReportId, input.id) });
     const body = `## Bug Report
-**Source:** ${message3?.source || "unknown"}${message3?.channel ? ` #${message3.channel}` : ""} | **Component:** ${bug.component} | **Severity:** ${bug.severity}
+**Source:** ${message2?.source || "unknown"}${message2?.channel ? ` #${message2.channel}` : ""} | **Component:** ${bug.component} | **Severity:** ${bug.severity}
 **Priority Score:** ${bug.priorityScore}/100 | **Assigned:** ${bug.assigneeHandle || "unassigned"}
 
 ### Description
-${message3?.rawContent || bug.description}
+${message2?.rawContent || bug.description}
 
 ### Parsed Intent
 - Type: ${parsed?.intent || "unknown"} (confidence: ${parsed?.intentConfidence?.toFixed(2) || "N/A"})
@@ -70046,16 +70048,16 @@ ${repro.errorLogSummary}` : ""}` : "### Reproduction Steps\n*Pending generation*
 });
 function buildGithubIssueBody({
   bug,
-  message: message3,
+  message: message2,
   parsed,
   repro
 }) {
   return `## Bug Report
-**Source:** ${message3?.source ?? "unknown"}${message3?.channel ? ` #${message3.channel}` : ""} | **Component:** ${bug.component} | **Severity:** ${bug.severity}
+**Source:** ${message2?.source ?? "unknown"}${message2?.channel ? ` #${message2.channel}` : ""} | **Component:** ${bug.component} | **Severity:** ${bug.severity}
 **Priority Score:** ${bug.priorityScore}/100 | **Assigned:** ${bug.assigneeHandle ?? "unassigned"}
 
 ### Description
-${message3?.rawContent ?? "(no description)"}
+${message2?.rawContent ?? "(no description)"}
 
 ### Parsed Intent
 - Type: ${parsed?.intent ?? "unknown"} (confidence: ${parsed?.intentConfidence?.toFixed(2) ?? "N/A"})
@@ -70079,7 +70081,7 @@ ${repro.errorLogSummary}` : ""}` : "### Reproduction Steps\n*Pending generation*
 init_schema2();
 var agentRouter = createRouter({
   // Get recent agent activities
-  activities: publicQuery2.input(
+  activities: publicQuery.input(
     external_exports.object({
       agent: external_exports.enum(["parser", "triage", "reproduction", "release", "all"]).optional().default("all"),
       limit: external_exports.number().min(1).max(100).optional().default(20),
@@ -70112,7 +70114,7 @@ var agentRouter = createRouter({
     return enriched;
   }),
   // Get activity stats per agent
-  stats: publicQuery2.query(async () => {
+  stats: publicQuery.query(async () => {
     const db2 = getDb();
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1e3);
     const byAgent = await db2.select({
@@ -70130,12 +70132,12 @@ var agentRouter = createRouter({
     return { byAgent, recent };
   }),
   // Manually trigger processing for a message
-  triggerProcess: publicQuery2.input(external_exports.object({ messageId: external_exports.number() })).mutation(async ({ input }) => {
+  triggerProcess: publicQuery.input(external_exports.object({ messageId: external_exports.number() })).mutation(async ({ input }) => {
     const result = await processMessage(input.messageId);
     return result;
   }),
   // Get agent health/status
-  health: publicQuery2.query(async () => {
+  health: publicQuery.query(async () => {
     const db2 = getDb();
     const last5min = new Date(Date.now() - 5 * 60 * 1e3);
     const recentActivities = await db2.query.agentActivities.findMany({
@@ -70165,7 +70167,7 @@ var agentRouter = createRouter({
 init_schema2();
 var analyticsRouter = createRouter({
   // Dashboard overview stats
-  overview: publicQuery2.query(async () => {
+  overview: publicQuery.query(async () => {
     const pg2 = getPg();
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1e3);
     const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3);
@@ -70254,7 +70256,7 @@ var analyticsRouter = createRouter({
     };
   }),
   // Time-series data for charts
-  timeSeries: publicQuery2.input(
+  timeSeries: publicQuery.input(
     external_exports.object({
       days: external_exports.number().min(1).max(90).optional().default(7),
       metric: external_exports.enum(["messages", "bugs", "resolutions"]).optional().default("bugs")
@@ -70279,7 +70281,7 @@ var analyticsRouter = createRouter({
     return result;
   }),
   // Performance metrics
-  performance: publicQuery2.query(async () => {
+  performance: publicQuery.query(async () => {
     const db2 = getDb();
     const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3);
     const avgParseTime = await db2.select({
@@ -70429,7 +70431,7 @@ async function upsertStatus(service, status, responseTime, metadata, error48) {
 }
 var integrationRouter = createRouter({
   // Get all integration statuses
-  list: publicQuery2.query(async () => {
+  list: publicQuery.query(async () => {
     const db2 = getDb();
     const items = await db2.query.integrationStatus.findMany({
       orderBy: [desc(integrationStatus.updatedAt)]
@@ -70437,7 +70439,7 @@ var integrationRouter = createRouter({
     return items;
   }),
   // Get specific integration status
-  get: publicQuery2.input(external_exports.object({ service: external_exports.enum(["github", "slack", "email", "lemma", "llm"]) })).query(async ({ input }) => {
+  get: publicQuery.input(external_exports.object({ service: external_exports.enum(["github", "slack", "email", "lemma", "llm"]) })).query(async ({ input }) => {
     const db2 = getDb();
     const item = await db2.query.integrationStatus.findFirst({
       where: eq(integrationStatus.service, input.service)
@@ -70445,7 +70447,7 @@ var integrationRouter = createRouter({
     return item;
   }),
   // Real health check for a single service
-  check: publicQuery2.input(external_exports.object({ service: external_exports.enum(["github", "slack", "email", "lemma", "llm"]) })).mutation(async ({ input }) => {
+  check: publicQuery.input(external_exports.object({ service: external_exports.enum(["github", "slack", "email", "lemma", "llm"]) })).mutation(async ({ input }) => {
     let result;
     switch (input.service) {
       case "github":
@@ -70476,7 +70478,7 @@ var integrationRouter = createRouter({
     return { service: input.service, ...result };
   }),
   // Batch check all integrations — real API pings
-  checkAll: publicQuery2.mutation(async () => {
+  checkAll: publicQuery.mutation(async () => {
     const [github, slack, gemini, lemma] = await Promise.all([
       checkGitHub(),
       checkSlack(),
@@ -70499,7 +70501,7 @@ var integrationRouter = createRouter({
     return results;
   }),
   // Get configuration status (for Settings UI — shows which keys are set)
-  config: publicQuery2.query(() => {
+  config: publicQuery.query(() => {
     return {
       github: {
         hasPat: !!process.env.GITHUB_PAT,
@@ -70728,7 +70730,7 @@ async function publishToGitHub(params) {
 // server/routers/release-notes.ts
 var releaseNotesRouter = createRouter({
   // ── Generate changelog markdown from resolved bugs (last N days) ───────
-  generate: publicQuery2.input(
+  generate: publicQuery.input(
     external_exports.object({
       days: external_exports.number().int().min(1).max(365).default(7),
       tagName: external_exports.string().optional()
@@ -70774,7 +70776,7 @@ var releaseNotesRouter = createRouter({
     };
   }),
   // ── Save a draft release note ──────────────────────────────────────────
-  save: publicQuery2.input(
+  save: publicQuery.input(
     external_exports.object({
       tagName: external_exports.string().min(1).max(100),
       name: external_exports.string().min(1).max(500),
@@ -70795,7 +70797,7 @@ var releaseNotesRouter = createRouter({
     return note;
   }),
   // ── Publish a saved note as a GitHub draft release ─────────────────────
-  publish: publicQuery2.input(external_exports.object({ id: external_exports.number() })).mutation(async ({ input }) => {
+  publish: publicQuery.input(external_exports.object({ id: external_exports.number() })).mutation(async ({ input }) => {
     const db2 = getDb();
     const note = await db2.query.releaseNotes.findFirst({
       where: eq(releaseNotes.id, input.id)
@@ -70823,7 +70825,7 @@ var releaseNotesRouter = createRouter({
     return { alreadyPublished: false, githubReleaseUrl: result.url };
   }),
   // ── List all release notes ─────────────────────────────────────────────
-  list: publicQuery2.query(async () => {
+  list: publicQuery.query(async () => {
     const db2 = getDb();
     return db2.select({
       id: releaseNotes.id,
@@ -70837,14 +70839,14 @@ var releaseNotesRouter = createRouter({
     }).from(releaseNotes).orderBy(desc(releaseNotes.createdAt));
   }),
   // ── Get single note with full body ─────────────────────────────────────
-  getById: publicQuery2.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
+  getById: publicQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
     const db2 = getDb();
     return db2.query.releaseNotes.findFirst({
       where: eq(releaseNotes.id, input.id)
     });
   }),
   // ── Delete a draft note ────────────────────────────────────────────────
-  delete: publicQuery2.input(external_exports.object({ id: external_exports.number() })).mutation(async ({ input }) => {
+  delete: publicQuery.input(external_exports.object({ id: external_exports.number() })).mutation(async ({ input }) => {
     const db2 = getDb();
     const note = await db2.query.releaseNotes.findFirst({
       where: eq(releaseNotes.id, input.id)
@@ -70861,7 +70863,7 @@ var releaseNotesRouter = createRouter({
 // server/routers/tenants.ts
 init_schema2();
 var tenantRouter = createRouter({
-  list: publicQuery2.use(requireAuth).query(async ({ ctx }) => {
+  list: publicQuery.use(requireAuth).query(async ({ ctx }) => {
     const db2 = getDb();
     const memberships = await db2.select().from(tenantMembers).where(eq(tenantMembers.userId, ctx.user.id));
     if (memberships.length === 0) {
@@ -70873,7 +70875,7 @@ var tenantRouter = createRouter({
     });
     return userTenants;
   }),
-  getSubscriptionStatus: publicQuery2.use(requireAuth).query(async ({ ctx }) => {
+  getSubscriptionStatus: publicQuery.use(requireAuth).query(async ({ ctx }) => {
     const db2 = getDb();
     const tenantId = ctx.tenantId;
     if (!tenantId) {
@@ -70890,7 +70892,7 @@ var tenantRouter = createRouter({
       usage: usage || { bugsProcessedCount: 0, month: currentMonth }
     };
   }),
-  createCheckoutSession: publicQuery2.use(requireAuth).mutation(async ({ ctx }) => {
+  createCheckoutSession: publicQuery.use(requireAuth).mutation(async ({ ctx }) => {
     const tenantId = ctx.tenantId;
     if (!tenantId) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "No tenant context" });
@@ -70931,7 +70933,7 @@ var tenantRouter = createRouter({
 
 // server/router.ts
 var appRouter = createRouter({
-  ping: publicQuery2.query(() => ({ ok: true, ts: Date.now() })),
+  ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
   auth: authRouter,
   messages: messageRouter,
   bugs: bugRouter,
@@ -71042,8 +71044,8 @@ var setCookie = (c, name, value, opt) => {
 var cookie2 = __toESM(require_dist(), 1);
 
 // contracts/errors.ts
-function appError(status, message3) {
-  return { tag: "app_error", status, message: message3 };
+function appError(status, message2) {
+  return { tag: "app_error", status, message: message2 };
 }
 var Errors2 = {
   badRequest: (msg) => appError(400, msg),
@@ -78061,9 +78063,9 @@ function delay(ms, error48, abortController) {
   };
   return promise2;
 }
-async function resolveWithinSeconds(promise2, seconds, message3, abortController) {
+async function resolveWithinSeconds(promise2, seconds, message2, abortController) {
   const timeout = Math.max(1, seconds) * 1e3;
-  const reject = delay(timeout, message3, abortController);
+  const reject = delay(timeout, message2, abortController);
   let result;
   try {
     result = await Promise.race([promise2, reject]);
@@ -78074,12 +78076,12 @@ async function resolveWithinSeconds(promise2, seconds, message3, abortController
 }
 
 // node_modules/pg-boss/dist/warning.js
-async function emitAndPersistWarning(ctx, type2, message3, data) {
-  ctx.emitter.emit(ctx.warningEvent, { message: message3, data });
+async function emitAndPersistWarning(ctx, type2, message2, data) {
+  ctx.emitter.emit(ctx.warningEvent, { message: message2, data });
   if (ctx.persistWarnings) {
     try {
       const sql2 = insertWarning(ctx.schema);
-      await ctx.db.executeSql(sql2, [type2, message3, JSON.stringify(data)]);
+      await ctx.db.executeSql(sql2, [type2, message2, JSON.stringify(data)]);
     } catch (err) {
       ctx.emitter.emit(ctx.errorEvent, err);
     }
@@ -81117,10 +81119,10 @@ async function sha256Hex(content) {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b2) => b2.toString(16).padStart(2, "0")).join("");
 }
-async function hmacSha256Hex(key, message3) {
+async function hmacSha256Hex(key, message2) {
   const encoder2 = new TextEncoder();
   const keyData = encoder2.encode(key);
-  const msgData = encoder2.encode(message3);
+  const msgData = encoder2.encode(message2);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
@@ -81437,6 +81439,8 @@ URL: ${issue2.permalink || ""}`;
     const dup = await isDuplicate(senderId, rawContent);
     if (dup) return c.json({ ok: true, duplicate: true });
     const id = await insertAndProcess({
+      tenantId: 1,
+      // Sentry integration defaults to tenant 1 until per-tenant routing is wired up
       source: "form",
       // using 'form' as generic webhook source since we don't have 'sentry' in schema yet
       rawContent,
@@ -81474,6 +81478,8 @@ URL: ${issue2.html_url}`;
     const dup = await isDuplicate(senderId, rawContent);
     if (dup) return c.json({ ok: true, duplicate: true });
     const id = await insertAndProcess({
+      tenantId: 1,
+      // GitHub integration defaults to tenant 1 until per-tenant routing is wired up
       source: "form",
       // mapping to 'form' as generic integration
       rawContent,
