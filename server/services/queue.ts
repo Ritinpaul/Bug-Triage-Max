@@ -1,7 +1,7 @@
-// pg-boss v12 ships as CJS; esbuild/Vite need this import style to get the class
-import PgBossModule from "pg-boss";
+import { createRequire } from "module";
+const _require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PgBoss = (PgBossModule as any).default ?? PgBossModule;
+const PgBoss: any = _require("pg-boss");
 import { processMessage } from "./agent-service";
 import { getDb } from "../queries/connection";
 
