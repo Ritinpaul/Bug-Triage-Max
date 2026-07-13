@@ -55,14 +55,58 @@ export default function Settings() {
   const { data: team } = trpc.team.list.useQuery();
   const { data: config } = trpc.integrations.config.useQuery();
   const { data: subStatus } = trpc.tenants.getSubscriptionStatus.useQuery();
-  
-  const createCheckout = trpc.tenants.createCheckoutSession.useMutation({
-    onSuccess: (data) => {
-      window.location.href = data.url;
+  const verifyPayment = trpc.tenants.verifyRazorpayPayment.useMutation({
+    onSuccess: () => {
+      toast.success("Payment successful! You are now on the Pro plan.");
+      // Optional: refetch subscription status if possible, or reload
+      window.location.reload();
     },
-    onError: (err) => toast.error(`Checkout failed: ${err.message}`)
+    onError: (err) => toast.error(`Payment verification failed: ${err.message}`)
   });
 
+  const createOrder = trpc.tenants.createRazorpayOrder.useMutation({
+    onSuccess: async (data) => {
+      const loadRazorpay = () => new Promise<boolean>((resolve) => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+      });
+
+      const res = await loadRazorpay();
+      if (!res) {
+        toast.error("Failed to load Razorpay SDK. Check your connection.");
+        return;
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency,
+        name: "BugPulse Pro",
+        description: "Unlimited bugs and AI agents",
+        order_id: data.order_id,
+        handler: function (response: any) {
+          verifyPayment.mutate({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+        },
+        theme: {
+          color: "#0ea5e9", // Sky 500
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+        toast.error(`Payment failed: ${response.error.description}`);
+      });
+      rzp.open();
+    },
+    onError: (err) => toast.error(`Order creation failed: ${err.message}`)
+  });
   const [syncResult, setSyncResult] = useState<{
     synced: number; autoResolved: number; reopened: number;
   } | null>(null);
@@ -111,11 +155,11 @@ export default function Settings() {
             </div>
             {subStatus?.subscription?.plan !== "pro" && (
               <button
-                onClick={() => createCheckout.mutate()}
-                disabled={createCheckout.isPending}
+                onClick={() => createOrder.mutate()}
+                disabled={createOrder.isPending || verifyPayment.isPending}
                 className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
               >
-                {createCheckout.isPending ? "Loading..." : "Upgrade to Pro"}
+                {createOrder.isPending || verifyPayment.isPending ? "Processing..." : "Upgrade to Pro"}
               </button>
             )}
           </div>

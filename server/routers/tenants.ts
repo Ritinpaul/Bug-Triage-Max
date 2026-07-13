@@ -3,6 +3,7 @@ import { getDb } from "../queries/connection";
 import { tenants, tenantMembers } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 export const tenantRouter = createRouter({
   list: publicQuery.use(requireAuth).query(async ({ ctx }) => {
@@ -47,46 +48,81 @@ export const tenantRouter = createRouter({
     };
   }),
 
-  createCheckoutSession: publicQuery.use(requireAuth).mutation(async ({ ctx }) => {
+  createRazorpayOrder: publicQuery.use(requireAuth).mutation(async ({ ctx }) => {
     const tenantId = ctx.tenantId;
     if (!tenantId) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "No tenant context" });
     }
 
-    const { default: Stripe } = await import("stripe");
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
-
-    // Get the base URL from the request or env (for local testing, use localhost:5173)
-    const baseUrl = process.env.VITE_APP_URL || "http://localhost:5173";
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "BugPulse Pro",
-              description: "Unlimited bugs and AI agents",
-            },
-            unit_amount: 4900, // $49.00
-            recurring: {
-              interval: "month",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: `${baseUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/settings`,
-      client_reference_id: tenantId.toString(),
+    const Razorpay = (await import("razorpay")).default;
+    const instance = new Razorpay({
+      key_id: process.env.VITE_RAZORPAY_KEY_ID ?? "",
+      key_secret: process.env.RAZORPAY_KEY_SECRET ?? "",
     });
 
-    if (!session.url) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create checkout session" });
+    const amount = 490000; // 4900 INR = $49 (rough estimate, 100 paise = 1 INR)
+
+    try {
+      const order = await instance.orders.create({
+        amount,
+        currency: "INR",
+        receipt: `receipt_tenant_${tenantId}`,
+      });
+
+      return {
+        order_id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+      };
+    } catch (err: any) {
+      console.error("Razorpay order creation failed:", err);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create Razorpay order" });
+    }
+  }),
+
+  verifyRazorpayPayment: publicQuery.use(requireAuth).input(z.object({
+    razorpay_order_id: z.string(),
+    razorpay_payment_id: z.string(),
+    razorpay_signature: z.string()
+  })).mutation(async ({ ctx, input }) => {
+    const tenantId = ctx.tenantId;
+    if (!tenantId) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No tenant context" });
     }
 
-    return { url: session.url };
+    const crypto = await import("crypto");
+    const secret = process.env.RAZORPAY_KEY_SECRET ?? "";
+    
+    const body = input.razorpay_order_id + "|" + input.razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== input.razorpay_signature) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid signature" });
+    }
+
+    // Payment successful! Update database
+    const db = getDb();
+    const { subscriptions } = await import("../../db/schema");
+    
+    await db.insert(subscriptions).values({
+      tenantId,
+      razorpayPaymentId: input.razorpay_payment_id,
+      razorpayOrderId: input.razorpay_order_id,
+      status: "active",
+      plan: "pro",
+    }).onConflictDoUpdate({
+      target: subscriptions.tenantId,
+      set: {
+        razorpayPaymentId: input.razorpay_payment_id,
+        razorpayOrderId: input.razorpay_order_id,
+        status: "active",
+        plan: "pro",
+      }
+    });
+
+    return { success: true };
   }),
 });

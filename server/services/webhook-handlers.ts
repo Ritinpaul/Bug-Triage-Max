@@ -280,67 +280,71 @@ export function createWebhookRouter() {
     return c.json({ ok: true });
   });
 
-  // ─── Stripe Webhook ──────────────────────────────────────────────────
-  webhook.post("/api/webhooks/stripe", async (c) => {
-    const signature = c.req.header("stripe-signature");
-    if (!signature) {
-      return c.json({ error: "No signature" }, 400);
-    }
-
-    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!STRIPE_WEBHOOK_SECRET) {
-      return c.json({ error: "Webhook secret not configured" }, 500);
-    }
+  // ─── Razorpay Webhook ─────────────────────────────────────────────────
+  webhook.post("/api/webhooks/razorpay", async (c) => {
+    const signature = c.req.header("x-razorpay-signature");
+    const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
 
     const bodyText = await c.req.text();
-    let event;
+
+    // Validate webhook signature if secret is configured
+    if (RAZORPAY_WEBHOOK_SECRET && signature) {
+      const crypto = await import("crypto");
+      const expectedSignature = crypto
+        .createHmac("sha256", RAZORPAY_WEBHOOK_SECRET)
+        .update(bodyText)
+        .digest("hex");
+
+      if (expectedSignature !== signature) {
+        console.error("[Razorpay Webhook] Invalid signature");
+        return c.json({ error: "Invalid signature" }, 400);
+      }
+    }
+
+    let event: any;
     try {
-      const { default: Stripe } = await import("stripe");
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
-      event = stripe.webhooks.constructEvent(bodyText, signature, STRIPE_WEBHOOK_SECRET);
-    } catch (err: any) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
-      return c.json({ error: "Invalid signature" }, 400);
+      event = JSON.parse(bodyText);
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
     }
 
     const db = getDb();
-    const { subscriptions, tenants } = await import("../../db/schema");
+    const { subscriptions } = await import("../../db/schema");
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const tenantIdStr = session.client_reference_id;
-        const customerId = session.customer as string;
-        const subscriptionId = session.subscription as string;
+    const eventType = event?.event;
+    const paymentEntity = event?.payload?.payment?.entity;
+    const subscriptionEntity = event?.payload?.subscription?.entity;
 
-        if (tenantIdStr) {
-          const tenantId = parseInt(tenantIdStr, 10);
-          await db.update(tenants)
-            .set({ stripeCustomerId: customerId })
-            .where(eq(tenants.id, tenantId));
-            
-          await db.insert(subscriptions).values({
-            tenantId,
-            stripeSubscriptionId: subscriptionId,
-            status: "active",
-            plan: "pro"
-          }).onConflictDoUpdate({
-            target: subscriptions.tenantId,
-            set: {
-              stripeSubscriptionId: subscriptionId,
-              status: "active",
-              plan: "pro"
-            }
-          });
+    switch (eventType) {
+      case "payment.captured": {
+        // One-time payment captured — mark as active
+        const orderId = paymentEntity?.order_id;
+        const paymentId = paymentEntity?.id;
+        if (orderId && paymentId) {
+          await db.update(subscriptions)
+            .set({ status: "active", plan: "pro", razorpayPaymentId: paymentId, razorpayOrderId: orderId })
+            .where(eq(subscriptions.razorpayOrderId, orderId));
         }
         break;
       }
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-        await db.update(subscriptions)
-          .set({ status: subscription.status })
-          .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
+      case "subscription.activated":
+      case "subscription.charged": {
+        const subId = subscriptionEntity?.id;
+        if (subId) {
+          await db.update(subscriptions)
+            .set({ status: "active", plan: "pro" })
+            .where(eq(subscriptions.razorpayPaymentId, subId));
+        }
+        break;
+      }
+      case "subscription.cancelled":
+      case "subscription.completed": {
+        const subId = subscriptionEntity?.id;
+        if (subId) {
+          await db.update(subscriptions)
+            .set({ status: "canceled" })
+            .where(eq(subscriptions.razorpayPaymentId, subId));
+        }
         break;
       }
     }

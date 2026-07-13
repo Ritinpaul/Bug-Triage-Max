@@ -48,7 +48,7 @@ export const tenants = pgTable("tenants", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   slackTeamId: varchar("slack_team_id", { length: 255 }),
   inboundEmailPrefix: varchar("inbound_email_prefix", { length: 255 }),
-  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  razorpayCustomerId: varchar("razorpay_customer_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -73,7 +73,8 @@ export type InsertTenantMember = typeof tenantMembers.$inferInsert;
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").notNull().unique(),
-  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  razorpayPaymentId: varchar("razorpay_payment_id", { length: 255 }),
+  razorpayOrderId: varchar("razorpay_order_id", { length: 255 }),
   status: varchar("status", { length: 50 }).notNull().default("incomplete"), // active, past_due, canceled, etc.
   plan: varchar("plan", { length: 50 }).notNull().default("free"), // free, pro
   currentPeriodEnd: timestamp("current_period_end"),
