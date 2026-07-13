@@ -207,6 +207,65 @@ export function createWebhookRouter() {
     return c.json({ ok: true });
   });
 
+  // ─── Cloudflare Email Webhook ─────────────────────────────────────────
+  webhook.post("/api/webhooks/cloudflare-email", async (c) => {
+    // 1. Authenticate with a shared secret
+    const secret = c.req.header("x-cloudflare-secret");
+    const CLOUDFLARE_WEBHOOK_SECRET = process.env.CLOUDFLARE_WEBHOOK_SECRET;
+    
+    if (!CLOUDFLARE_WEBHOOK_SECRET) {
+      console.error("[Cloudflare Webhook] CLOUDFLARE_WEBHOOK_SECRET is not configured");
+      return c.json({ error: "Server configuration error" }, 500);
+    }
+    if (secret !== CLOUDFLARE_WEBHOOK_SECRET) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    let payload: { to?: string; from?: string; subject?: string; text?: string } = {};
+    try {
+      payload = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON payload" }, 400);
+    }
+
+    const recipient = payload.to || "";
+    const sender = payload.from || "cloudflare_user";
+    const subject = payload.subject || "No Subject";
+    const bodyPlain = payload.text || "";
+    
+    const prefix = recipient.split("@")[0];
+    const db = getDb();
+    
+    let tenantId = 1;
+    if (prefix) {
+      const tenant = await db.query.tenants.findFirst({
+        where: eq(tenants.inboundEmailPrefix, prefix)
+      });
+      if (tenant) {
+        tenantId = tenant.id;
+      } else {
+        console.warn(`[Cloudflare Webhook] No tenant found for inbound prefix: ${prefix}`);
+      }
+    }
+
+    const rawContent = `Subject: ${subject}\n\n${bodyPlain}`;
+    
+    if (rawContent.trim().length > 0) {
+      const dup = await isDuplicate(sender, rawContent);
+      if (!dup) {
+        await insertAndProcess({
+          tenantId,
+          source: "email",
+          rawContent,
+          senderId: sender,
+          senderEmail: sender,
+        });
+      }
+    }
+    
+    return c.json({ ok: true });
+  });
+
   // ─── Stripe Webhook ──────────────────────────────────────────────────
   webhook.post("/api/webhooks/stripe", async (c) => {
     const signature = c.req.header("stripe-signature");

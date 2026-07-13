@@ -80943,6 +80943,10 @@ var PgBoss = class extends EventEmitter9 {
 // server/services/queue.ts
 var boss = null;
 async function initQueue() {
+  if (process.env.VERCEL) {
+    console.log("[Queue] Skipping pg-boss initialization on Vercel");
+    return;
+  }
   const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("Cannot start pg-boss: missing database connection string.");
@@ -80964,6 +80968,11 @@ async function initQueue() {
   });
 }
 async function enqueueMessageProcessing(messageId) {
+  if (process.env.VERCEL) {
+    console.log(`[Queue] Processing message ${messageId} inline on Vercel`);
+    processMessage(messageId).catch((err) => console.error(err));
+    return "inline";
+  }
   if (!boss) {
     throw new Error("pg-boss is not initialized");
   }
@@ -81113,6 +81122,56 @@ function createWebhookRouter() {
         tenantId = tenant.id;
       } else {
         console.warn(`[Mailgun Webhook] No tenant found for inbound prefix: ${prefix}`);
+      }
+    }
+    const rawContent = `Subject: ${subject}
+
+${bodyPlain}`;
+    if (rawContent.trim().length > 0) {
+      const dup = await isDuplicate(sender, rawContent);
+      if (!dup) {
+        await insertAndProcess({
+          tenantId,
+          source: "email",
+          rawContent,
+          senderId: sender,
+          senderEmail: sender
+        });
+      }
+    }
+    return c.json({ ok: true });
+  });
+  webhook.post("/api/webhooks/cloudflare-email", async (c) => {
+    const secret = c.req.header("x-cloudflare-secret");
+    const CLOUDFLARE_WEBHOOK_SECRET = process.env.CLOUDFLARE_WEBHOOK_SECRET;
+    if (!CLOUDFLARE_WEBHOOK_SECRET) {
+      console.error("[Cloudflare Webhook] CLOUDFLARE_WEBHOOK_SECRET is not configured");
+      return c.json({ error: "Server configuration error" }, 500);
+    }
+    if (secret !== CLOUDFLARE_WEBHOOK_SECRET) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    let payload = {};
+    try {
+      payload = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON payload" }, 400);
+    }
+    const recipient = payload.to || "";
+    const sender = payload.from || "cloudflare_user";
+    const subject = payload.subject || "No Subject";
+    const bodyPlain = payload.text || "";
+    const prefix = recipient.split("@")[0];
+    const db2 = getDb();
+    let tenantId = 1;
+    if (prefix) {
+      const tenant = await db2.query.tenants.findFirst({
+        where: eq(tenants.inboundEmailPrefix, prefix)
+      });
+      if (tenant) {
+        tenantId = tenant.id;
+      } else {
+        console.warn(`[Cloudflare Webhook] No tenant found for inbound prefix: ${prefix}`);
       }
     }
     const rawContent = `Subject: ${subject}
