@@ -221,7 +221,7 @@ export function createWebhookRouter() {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    let payload: { to?: string; from?: string; subject?: string; text?: string } = {};
+    let payload: { to?: string; from?: string; raw?: string } = {};
     try {
       payload = await c.req.json();
     } catch {
@@ -230,8 +230,22 @@ export function createWebhookRouter() {
 
     const recipient = payload.to || "";
     const sender = payload.from || "cloudflare_user";
-    const subject = payload.subject || "No Subject";
-    const bodyPlain = payload.text || "";
+    const rawEmailString = payload.raw || "";
+
+    // Parse the raw email using mailparser
+    let subject = "No Subject";
+    let bodyPlain = "";
+    
+    if (rawEmailString) {
+      try {
+        const { simpleParser } = await import("mailparser");
+        const parsed = await simpleParser(rawEmailString);
+        subject = parsed.subject || "No Subject";
+        bodyPlain = parsed.text || String(parsed.html || "");
+      } catch (e) {
+        console.error("Failed to parse raw email", e);
+      }
+    }
     
     const prefix = recipient.split("@")[0];
     const db = getDb();
