@@ -23,7 +23,8 @@ import {
   Monitor
 } from "lucide-react";
 import { GlassCard } from "@/components/GlassCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useTheme } from "@/providers/ThemeProvider";
 
@@ -51,6 +52,8 @@ const statusConfig: Record<string, { icon: React.ComponentType<{ className?: str
 };
 
 export default function Settings() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [hasAutoUpgraded, setHasAutoUpgraded] = useState(false);
   const { data: integrations, refetch: refetchIntegrations } = trpc.integrations.list.useQuery();
   const { data: team } = trpc.team.list.useQuery();
   const { data: config } = trpc.integrations.config.useQuery();
@@ -97,6 +100,11 @@ export default function Settings() {
         theme: {
           color: "#0ea5e9", // Sky 500
         },
+        modal: {
+          ondismiss: function() {
+            toast.info("Payment cancelled");
+          }
+        }
       };
 
       const rzp = new (window as any).Razorpay(options);
@@ -110,6 +118,16 @@ export default function Settings() {
   const [syncResult, setSyncResult] = useState<{
     synced: number; autoResolved: number; reopened: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("upgrade") === "true" && !hasAutoUpgraded && subStatus && !createOrder.isPending) {
+      setHasAutoUpgraded(true);
+      setSearchParams(new URLSearchParams());
+      if (subStatus.subscription?.plan !== "pro") {
+        createOrder.mutate();
+      }
+    }
+  }, [searchParams, hasAutoUpgraded, setSearchParams, subStatus, createOrder]);
 
   const checkAll = trpc.integrations.checkAll.useMutation({
     onSuccess: () => {

@@ -60,7 +60,7 @@ export const tenantRouter = createRouter({
       key_secret: process.env.RAZORPAY_KEY_SECRET ?? "",
     });
 
-    const amount = 490000; // 4900 INR = $49 (rough estimate, 100 paise = 1 INR)
+    const amount = 49900; // 499 INR = ~$6 (equivalent to $5/mo regional pricing)
 
     try {
       const order = await instance.orders.create({
@@ -76,6 +76,9 @@ export const tenantRouter = createRouter({
       };
     } catch (err: any) {
       console.error("Razorpay order creation failed:", err);
+      if (err.statusCode === 401) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Razorpay authentication failed. Check API keys." });
+      }
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create Razorpay order" });
     }
   }),

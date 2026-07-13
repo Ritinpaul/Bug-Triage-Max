@@ -3,9 +3,15 @@ import { processMessage } from "./agent-service";
 import { getDb } from "../queries/connection";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let boss: any = null;
+const globalForBoss = globalThis as unknown as { boss: any };
+const boss = globalForBoss.boss;
 
 export async function initQueue() {
+  if (globalForBoss.boss) {
+    console.log("[Queue] pg-boss already initialized, skipping");
+    return;
+  }
+
   if (process.env.VERCEL) {
     console.log("[Queue] Skipping pg-boss initialization on Vercel");
     return;
@@ -16,16 +22,17 @@ export async function initQueue() {
     throw new Error("Cannot start pg-boss: missing database connection string.");
   }
 
-  boss = new PgBoss(connectionString);
+  globalForBoss.boss = new PgBoss(connectionString);
 
-  boss.on("error", (error) => console.error("pg-boss error:", error));
+  globalForBoss.boss.on("error", (error: any) => console.error("pg-boss error:", error));
 
-  await boss.start();
+  await globalForBoss.boss.start();
 
   console.log("pg-boss started successfully");
 
   // Register the worker to process messages
-  await boss.work("process-message", async (job) => {
+  await globalForBoss.boss.createQueue("process-message");
+  await globalForBoss.boss.work("process-message", async (job: any) => {
     const { messageId } = job.data as { messageId: number };
     console.log(`[Queue] Processing message ${messageId} (job ${job.id})`);
     try {
@@ -46,11 +53,11 @@ export async function enqueueMessageProcessing(messageId: number) {
     return "inline";
   }
 
-  if (!boss) {
+  if (!globalForBoss.boss) {
     throw new Error("pg-boss is not initialized");
   }
   
-  const jobId = await boss.send("process-message", { messageId }, {
+  const jobId = await globalForBoss.boss.send("process-message", { messageId }, {
     retryLimit: 5,
     retryDelay: 60, // 1 minute
   });

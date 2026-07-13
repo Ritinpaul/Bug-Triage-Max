@@ -89,12 +89,14 @@ function PricingCard({
   features,
   highlighted = false,
   delay = 0,
+  to = "/login",
 }: {
   title: string;
   price: string;
   features: string[];
   highlighted?: boolean;
   delay?: number;
+  to?: string;
 }) {
   return (
     <motion.div
@@ -122,7 +124,7 @@ function PricingCard({
         ))}
       </ul>
       <Link
-        to="/login"
+        to={to}
         className={`mt-8 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold transition-all ${
           highlighted
             ? "bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/30"
@@ -393,10 +395,11 @@ export default function LandingPage() {
             />
             <PricingCard
               title="Pro"
-              price="$29/mo"
+              price="$5/mo"
               features={["Unlimited bugs", "GitHub auto-sync", "Priority scoring", "Team management", "Email ingestion"]}
               highlighted
               delay={0.2}
+              to="/settings?upgrade=true"
             />
             <PricingCard
               title="Enterprise"

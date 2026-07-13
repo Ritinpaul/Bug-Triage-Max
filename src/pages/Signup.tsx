@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
-import { Loader2, Bug } from "lucide-react";
+import { Loader2, Bug, Eye, EyeOff } from "lucide-react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -22,6 +22,7 @@ export default function Signup() {
 
   const register = trpc.auth.register.useMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -81,7 +82,7 @@ export default function Signup() {
                 required
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm text-slate-900"
                 placeholder="John Doe"
               />
             </div>
@@ -92,21 +93,30 @@ export default function Signup() {
                 required
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm text-slate-900"
                 placeholder="you@example.com"
               />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Password</label>
-              <input 
-                type="password" 
-                required
-                minLength={6}
-                value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  minLength={6}
+                  value={formData.password}
+                  onChange={e => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm pr-10 text-slate-900"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
             
             <button

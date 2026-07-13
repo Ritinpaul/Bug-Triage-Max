@@ -1,12 +1,12 @@
 import * as cookie from "cookie";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
-import { createRouter, authedQuery, publicQuery, rateLimitMiddleware } from "./middleware";
+import { createRouter, authedQuery, publicQuery, rateLimitMiddleware, requireAuth } from "./middleware";
 import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 import { upsertUser } from "./queries/users";
 import { getDb } from "./queries/connection";
-import { messages, users } from "../db/schema";
+import { messages, users, tenants, tenantMembers } from "../db/schema";
 import { processMessage } from "./services/agent-service";
 import crypto from "crypto";
 import { z } from "zod";
@@ -15,8 +15,8 @@ import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const authRouter = createRouter({
-  me: authedQuery.query((opts) => opts.ctx.user),
-  logout: authedQuery.mutation(async ({ ctx }) => {
+  me: publicQuery.use(requireAuth).query((opts) => opts.ctx.user),
+  logout: publicQuery.use(requireAuth).mutation(async ({ ctx }) => {
     const opts = getSessionCookieOptions(ctx.req.headers);
     ctx.resHeaders.append(
       "set-cookie",
@@ -113,12 +113,27 @@ export const authRouter = createRouter({
     const passwordHash = await bcrypt.hash(input.password, 10);
     const unionId = `user-${crypto.randomUUID()}`;
     
-    await upsertUser({
+    const userResult = await upsertUser({
       unionId,
       name: input.name,
       email: input.email,
       passwordHash,
       lastSignInAt: new Date(),
+    });
+    
+    // Create a default tenant for the new user
+    const tenantName = `${input.name}'s Workspace`;
+    const tenantSlug = tenantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + crypto.randomUUID().slice(0, 6);
+    const [tenant] = await db.insert(tenants).values({
+      name: tenantName,
+      slug: tenantSlug,
+    }).returning({ id: tenants.id });
+
+    // Assign user as owner of the new tenant
+    await db.insert(tenantMembers).values({
+      tenantId: tenant.id,
+      userId: userResult.id,
+      role: "admin"
     });
     
     const token = await signSessionToken({ unionId, clientId: env.appId });

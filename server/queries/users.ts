@@ -29,11 +29,13 @@ export async function upsertUser(data: InsertUser) {
     updateSet.role = "admin";
   }
 
-  await getDb()
+  const [result] = await getDb()
     .insert(schema.users)
     .values(values)
     .onConflictDoUpdate({
       target: schema.users.unionId,
       set: updateSet,
-    });
+    })
+    .returning({ id: schema.users.id });
+  return result;
 }
